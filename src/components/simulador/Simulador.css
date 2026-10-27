@@ -1,0 +1,145 @@
+.simulador {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.simulador-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  color: var(--text-h);
+  font-size: 1.05rem;
+}
+
+.simulador-panel__title svg {
+  color: var(--green-700);
+}
+
+.simulador-panel__accion {
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+}
+
+.simulador-panel__nota {
+  margin: -6px 0 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.simulador-lote {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: -6px 0 0;
+}
+
+.simulador-lote dt {
+  font-size: 0.8rem;
+}
+
+.simulador-lote dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.simulador-variables {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.simulador-variables p {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.85rem;
+}
+
+/* Simulaciones guardadas */
+.simulaciones-guardadas__resumen {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+}
+
+.simulaciones-guardadas__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.simulacion-guardada {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.simulacion-guardada__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  color: var(--text-h);
+  overflow-wrap: anywhere;
+}
+
+.simulacion-guardada__grupo-titulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.simulacion-guardada__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 0;
+}
+
+.simulacion-guardada__datos dt {
+  font-size: 0.8rem;
+}
+
+.simulacion-guardada__datos dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.simulacion-guardada__recomendacion {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1280px) {
+  .simulador {
+    grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr);
+  }
+
+  /* La recomendación pasa debajo, ocupando el ancho completo. */
+  .simulador > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .simulador {
+    grid-template-columns: 1fr;
+  }
+}
