@@ -13,7 +13,7 @@ export interface Lote {
 export interface IndicadoresMonitoreo {
   gdd: number
   gdda: number
-  etapaFenologica: string
+  etapaFenologica: EtapaFenologicaSoja
   descripcionEtapa: string
   riesgo: NivelRiesgo
 }
@@ -50,7 +50,7 @@ export interface MonitoreoLote extends ResultadoAnalisis {
 }
 
 export const ETAPAS_FENOLOGICAS_SOJA = [
-  'VE', 'VC', 'V1', 'V2', 'V3',
+  'VE', 'VC', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7',
   'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8',
 ] as const
 
