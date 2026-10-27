@@ -1,0 +1,221 @@
+.monitoreo {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.monitoreo__aviso {
+  margin: -12px 0 20px;
+  font-size: 0.85rem;
+}
+
+.monitoreo__confirmacion {
+  margin-bottom: 20px;
+}
+
+.monitoreo__origen {
+  margin: 0 0 -8px;
+  font-size: 0.85rem;
+}
+
+/* Historial de observaciones */
+.historial__resumen {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+}
+
+.historial__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial__item {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.historial__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-h);
+}
+
+.historial__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 10px 0 0;
+}
+
+.historial__datos dt {
+  font-size: 0.8rem;
+}
+
+.historial__datos dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.historial__comentarios {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.monitoreo__detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* Selector de lote */
+.lote-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 40px;
+  padding: 18px 20px;
+}
+
+.lote-selector__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 240px;
+  color: var(--text-h);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lote-selector__field select {
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 400;
+}
+
+.lote-selector__field select:disabled {
+  background: var(--bg);
+  cursor: not-allowed;
+}
+
+.lote-selector__field select:focus {
+  outline: 2px solid var(--green-700);
+  outline-offset: 1px;
+}
+
+.lote-selector__info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 40px;
+  margin: 0;
+}
+
+.lote-selector__info dt {
+  font-size: 0.8rem;
+}
+
+.lote-selector__info dd {
+  margin: 2px 0 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+/* Condiciones climáticas */
+.clima-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.clima-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.clima-item__icon {
+  color: var(--green-700);
+}
+
+.clima-item__label,
+.clima-item__caption {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.clima-item__label {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.clima-item__value {
+  display: block;
+  margin: 2px 0;
+  color: var(--text-h);
+  font-size: 1.4rem;
+}
+
+.clima-item__value small {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Próximo monitoreo */
+.proximo-monitoreo {
+  display: flex;
+  gap: 14px;
+  padding: 20px;
+  border-color: #cfe6d4;
+  background: var(--green-50);
+}
+
+.proximo-monitoreo__icon {
+  color: var(--green-700);
+}
+
+.proximo-monitoreo__label,
+.proximo-monitoreo__caption {
+  display: block;
+  font-size: 0.85rem;
+}
+
+.proximo-monitoreo__label {
+  color: var(--green-700);
+  font-weight: 600;
+}
+
+.proximo-monitoreo__fecha {
+  display: block;
+  margin: 6px 0;
+  color: var(--text-h);
+  font-size: 1.3rem;
+  line-height: 1.3;
+}
+
+.proximo-monitoreo__fecha::first-letter {
+  text-transform: uppercase;
+}
+
+@media (max-width: 1100px) {
+  .monitoreo__detalle {
+    grid-template-columns: 1fr;
+  }
+}
