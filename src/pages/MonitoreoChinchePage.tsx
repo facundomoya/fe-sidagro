@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Modal from '../components/Modal'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
 import StatusMessage from '../components/StatusMessage'
 import LoteSelector from '../components/monitoreo/LoteSelector'
+import AlertasPanel from '../components/monitoreo/AlertasPanel'
 import ClimaPanel from '../components/monitoreo/ClimaPanel'
 import ProximoMonitoreoCard from '../components/monitoreo/ProximoMonitoreoCard'
-import ObservacionForm from '../components/monitoreo/ObservacionForm'
 import HistorialObservaciones from '../components/monitoreo/HistorialObservaciones'
-import HistorialAnalisis from '../components/monitoreo/HistorialAnalisis'
-import { TONO_RIESGO } from '../components/monitoreo/riesgo'
-import Modal from '../components/Modal'
+import ObservacionForm from '../components/monitoreo/ObservacionForm'
+import ErrorConReintento from '../components/monitoreo/ErrorConReintento'
+import { describirError, type ErrorCarga } from '../components/monitoreo/errores'
+import { tonoRiesgo } from '../components/monitoreo/riesgo'
 import {
   IconClipboard,
   IconHistory,
@@ -19,50 +21,74 @@ import {
   IconSprout,
   IconTrend,
 } from '../components/icons/Icons'
-import {
-  ejecutarAnalisis,
-  obtenerLotes,
-  obtenerMonitoreoPorLote,
-} from '../services/monitoreoService'
-import type { Lote, MonitoreoLote } from '../types/monitoreo'
-import { formatearFechaHora, formatearNumero } from '../utils/format'
+import { obtenerLotes } from '../services/catalogoService'
+import { obtenerMonitoreo } from '../services/monitoreoService'
+import type { LoteApi } from '../types/catalogo'
+import type { Monitoreo, ObservacionApi } from '../types/monitoreoApi'
+import { fechaHoyIso, formatearFecha, formatearFechaHora, formatearNumero } from '../utils/format'
 import '../components/monitoreo/Monitoreo.css'
 
 const DURACION_CONFIRMACION_MS = 5000
 
-interface ResultadoMonitoreo {
-  loteId: string
-  datos: MonitoreoLote | null
-  error: boolean
-}
+type ModalActivo = 'observacion' | 'historial' | null
 
 interface Confirmacion {
   id: number
   texto: string
 }
 
-type ModalActivo = 'observacion' | 'historialObservaciones' | 'historialAnalisis' | null
+interface ResultadoMonitoreo {
+  loteId: number
+  /** Intento (consulta inicial o actualización) al que corresponde el resultado. */
+  intento: number
+  /** Últimos datos obtenidos del lote. Se conservan si falla una actualización. */
+  datos: Monitoreo | null
+  /** Fecha y hora ISO en que se obtuvieron los datos. */
+  obtenidoEn: string | null
+  error: ErrorCarga | null
+}
+
+function UnidadGradosDia() {
+  return <small className="monitoreo__unidad">°C día</small>
+}
+
+/** Prioriza un lote con fecha de siembra para mostrar datos desde el inicio. */
+function loteInicial(lotes: LoteApi[], hoy: string): LoteApi | undefined {
+  return lotes.find((l) => l.fechaSiembra && l.fechaSiembra <= hoy) ?? lotes[0]
+}
 
 function MonitoreoChinchePage() {
-  const [lotes, setLotes] = useState<Lote[]>([])
-  const [loteId, setLoteId] = useState('')
+  const hoy = fechaHoyIso()
+
+  const [lotes, setLotes] = useState<LoteApi[]>([])
   const [cargandoLotes, setCargandoLotes] = useState(true)
-  const [errorLotes, setErrorLotes] = useState(false)
+  const [errorLotes, setErrorLotes] = useState<ErrorCarga | null>(null)
+  const [intentoLotes, setIntentoLotes] = useState(0)
 
-  // Resultado de la última consulta; mientras no corresponda al lote seleccionado, se está cargando.
+  const [loteId, setLoteId] = useState<number | null>(null)
+  const [intentoMonitoreo, setIntentoMonitoreo] = useState(0)
   const [resultado, setResultado] = useState<ResultadoMonitoreo | null>(null)
-  const cargandoMonitoreo = resultado?.loteId !== loteId
-  const errorMonitoreo = !cargandoMonitoreo && resultado.error
-  const monitoreo = cargandoMonitoreo ? null : resultado.datos
-
-  const loteSeleccionado = lotes.find((l) => l.id === loteId)
   const [modalActivo, setModalActivo] = useState<ModalActivo>(null)
   const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null)
-  const [ejecutandoAnalisis, setEjecutandoAnalisis] = useState(false)
-  const [errorAnalisis, setErrorAnalisis] = useState(false)
+  const [guardandoObservacion, setGuardandoObservacion] = useState(false)
+  // Lote seleccionado en este momento, para descartar respuestas tardías de otro lote.
+  const loteIdRef = useRef<number | null>(null)
 
-  const cerrarModal = () => setModalActivo(null)
-  const confirmar = (texto: string) => setConfirmacion({ id: Date.now(), texto })
+  const lote = lotes.find((l) => l.id === loteId)
+  const sinSiembra = !!lote && !lote.fechaSiembra
+  const siembraFutura = !!lote?.fechaSiembra && lote.fechaSiembra > hoy
+  const puedeCalcular = !!lote && !sinSiembra && !siembraFutura
+
+  // Solo se usa el resultado del lote seleccionado. Si corresponde a un intento anterior,
+  // hay una consulta en curso: se muestran los datos previos mientras se actualizan.
+  const resultadoLote = puedeCalcular && resultado?.loteId === loteId ? resultado : null
+  const consultando = puedeCalcular && resultadoLote?.intento !== intentoMonitoreo
+  const monitoreo = resultadoLote?.datos ?? null
+  const errorMonitoreo = consultando ? null : resultadoLote?.error ?? null
+
+  useEffect(() => {
+    loteIdRef.current = loteId
+  }, [loteId])
 
   useEffect(() => {
     if (!confirmacion) return
@@ -71,81 +97,95 @@ function MonitoreoChinchePage() {
   }, [confirmacion])
 
   useEffect(() => {
-    obtenerLotes()
+    const controller = new AbortController()
+    obtenerLotes(controller.signal)
       .then((datos) => {
         setLotes(datos)
-        if (datos.length > 0) setLoteId(datos[0].id)
+        setLoteId(loteInicial(datos, fechaHoyIso())?.id ?? null)
       })
-      .catch(() => setErrorLotes(true))
-      .finally(() => setCargandoLotes(false))
-  }, [])
+      .catch((error) => {
+        if (!controller.signal.aborted) setErrorLotes(describirError(error, 'los lotes'))
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCargandoLotes(false)
+      })
+    return () => controller.abort()
+  }, [intentoLotes])
 
   useEffect(() => {
-    if (!loteId) return
-    let vigente = true
-    obtenerMonitoreoPorLote(loteId)
-      .then((datos) => vigente && setResultado({ loteId, datos, error: false }))
-      .catch(() => vigente && setResultado({ loteId, datos: null, error: true }))
-    return () => {
-      vigente = false
-    }
-  }, [loteId])
-
-  async function handleEjecutarAnalisis() {
-    if (!loteSeleccionado || ejecutandoAnalisis) return
-    const lote = loteSeleccionado
-    setEjecutandoAnalisis(true)
-    setErrorAnalisis(false)
-    try {
-      const analisis = await ejecutarAnalisis(lote.id)
-      // Reemplaza solo los resultados predictivos; el clima y las observaciones no cambian.
-      setResultado((prev) =>
-        prev?.loteId === analisis.loteId && prev.datos
-          ? {
-              ...prev,
-              datos: {
-                ...prev.datos,
-                indicadores: analisis.indicadores,
-                proximoMonitoreo: analisis.proximoMonitoreo,
-                fechaUltimoAnalisis: analisis.fechaEjecucion,
-              },
-            }
-          : prev,
+    if (loteId === null || !puedeCalcular) return
+    const controller = new AbortController()
+    obtenerMonitoreo(loteId, controller.signal)
+      .then((datos) =>
+        setResultado({
+          loteId,
+          intento: intentoMonitoreo,
+          datos,
+          obtenidoEn: new Date().toISOString(),
+          error: null,
+        }),
       )
-      confirmar(`Análisis ejecutado para ${lote.nombre}. Los resultados son simulados.`)
-    } catch {
-      setErrorAnalisis(true)
-    } finally {
-      setEjecutandoAnalisis(false)
-    }
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        // Si falla una actualización, se conservan los últimos datos del mismo lote.
+        setResultado((prev) => {
+          const anterior = prev?.loteId === loteId ? prev : null
+          return {
+            loteId,
+            intento: intentoMonitoreo,
+            datos: anterior?.datos ?? null,
+            obtenidoEn: anterior?.obtenidoEn ?? null,
+            error: describirError(error, 'el monitoreo del lote'),
+          }
+        })
+      })
+    return () => controller.abort()
+  }, [loteId, intentoMonitoreo, puedeCalcular])
+
+  function reintentarLotes() {
+    setErrorLotes(null)
+    setCargandoLotes(true)
+    setIntentoLotes((n) => n + 1)
   }
+
+  function actualizarDatos() {
+    if (!puedeCalcular || consultando) return
+    setIntentoMonitoreo((n) => n + 1)
+  }
+
+  function handleObservacionGuardada(observacion: ObservacionApi, loteGuardadoId: number) {
+    const nombre = lotes.find((l) => l.id === loteGuardadoId)?.nombre ?? 'el lote'
+    setConfirmacion({
+      id: Date.now(),
+      texto: `Observación del ${formatearFecha(observacion.fecha)} registrada para ${nombre}.`,
+    })
+    // Si mientras se guardaba se eligió otro lote, no se toca su información.
+    if (loteGuardadoId !== loteIdRef.current) return
+    setModalActivo(null)
+    // El backend recalcula el riesgo y el próximo monitoreo con la nueva observación.
+    if (puedeCalcular) setIntentoMonitoreo((n) => n + 1)
+  }
+
+  const diaActual = monitoreo?.fechasMonitoreo.find((d) => d.fecha === monitoreo.fecha) ?? null
+  const actualizando = consultando && !!monitoreo
 
   const acciones = (
     <>
       <button
         type="button"
         className="btn btn--secondary"
-        disabled={!monitoreo || ejecutandoAnalisis}
-        onClick={handleEjecutarAnalisis}
-        aria-busy={ejecutandoAnalisis}
+        disabled={!puedeCalcular || consultando}
+        onClick={actualizarDatos}
+        aria-busy={actualizando}
       >
-        {ejecutandoAnalisis ? <span className="btn__spinner" aria-hidden="true" /> : <IconRefresh />}
-        {ejecutandoAnalisis ? 'Ejecutando análisis...' : 'Ejecutar nuevo análisis'}
+        {actualizando ? <span className="btn__spinner" aria-hidden="true" /> : <IconRefresh />}
+        {actualizando ? 'Actualizando...' : 'Actualizar datos'}
       </button>
       <button
         type="button"
         className="btn btn--secondary"
-        disabled={!loteSeleccionado}
-        onClick={() => setModalActivo('historialAnalisis')}
-      >
-        <IconHistory />
-        Ver historial de análisis
-      </button>
-      <button
-        type="button"
-        className="btn btn--secondary"
-        disabled={!loteSeleccionado}
-        onClick={() => setModalActivo('historialObservaciones')}
+        disabled={!lote}
+        onClick={() => setModalActivo('historial')}
       >
         <IconHistory />
         Ver historial de observaciones
@@ -153,7 +193,7 @@ function MonitoreoChinchePage() {
       <button
         type="button"
         className="btn btn--primary"
-        disabled={!loteSeleccionado}
+        disabled={!lote}
         onClick={() => setModalActivo('observacion')}
       >
         <IconClipboard />
@@ -169,10 +209,6 @@ function MonitoreoChinchePage() {
         description="Seguimiento del cultivo y de las condiciones climáticas para planificar el monitoreo del lote."
         actions={acciones}
       />
-      <p className="monitoreo__aviso">
-        Datos simulados con fines de desarrollo. Los análisis y las observaciones se guardan solo
-        durante la sesión.
-      </p>
 
       {confirmacion && (
         <div className="monitoreo__confirmacion">
@@ -180,114 +216,132 @@ function MonitoreoChinchePage() {
         </div>
       )}
 
-      {loteSeleccionado && (
+      {lote && (
         <>
           <Modal
             open={modalActivo === 'observacion'}
             title="Registrar observación de campo"
-            onClose={cerrarModal}
+            onClose={() => setModalActivo(null)}
+            bloqueado={guardandoObservacion}
           >
             <ObservacionForm
-              lote={loteSeleccionado}
-              onCancel={cerrarModal}
-              onSaved={() => {
-                cerrarModal()
-                confirmar(`Observación registrada correctamente para ${loteSeleccionado.nombre}.`)
-              }}
+              key={lote.id}
+              lote={lote}
+              onCancel={() => setModalActivo(null)}
+              onSaved={handleObservacionGuardada}
+              onGuardandoChange={setGuardandoObservacion}
             />
           </Modal>
 
           <Modal
-            open={modalActivo === 'historialObservaciones'}
+            open={modalActivo === 'historial'}
             title="Historial de observaciones"
-            onClose={cerrarModal}
+            onClose={() => setModalActivo(null)}
           >
-            <HistorialObservaciones lote={loteSeleccionado} />
-          </Modal>
-
-          <Modal
-            open={modalActivo === 'historialAnalisis'}
-            title="Historial de análisis"
-            onClose={cerrarModal}
-          >
-            <HistorialAnalisis lote={loteSeleccionado} />
+            <HistorialObservaciones key={lote.id} loteId={lote.id} loteNombre={lote.nombre} />
           </Modal>
         </>
       )}
 
       {cargandoLotes && <StatusMessage type="loading" message="Cargando lotes..." />}
-      {errorLotes && <StatusMessage type="error" message="No se pudieron cargar los lotes." />}
+      {errorLotes && <ErrorConReintento error={errorLotes} onReintentar={reintentarLotes} />}
       {!cargandoLotes && !errorLotes && lotes.length === 0 && (
-        <StatusMessage type="empty" message="No hay lotes disponibles." />
+        <StatusMessage type="empty" message="No hay lotes registrados." />
       )}
 
       {lotes.length > 0 && (
         <div className="monitoreo">
-          <LoteSelector
-            lotes={lotes}
-            loteSeleccionadoId={loteId}
-            onChange={setLoteId}
-            disabled={ejecutandoAnalisis}
-          />
+          <LoteSelector lotes={lotes} loteSeleccionadoId={loteId} onChange={setLoteId} />
 
-          {cargandoMonitoreo && (
-            <StatusMessage type="loading" message="Cargando datos de monitoreo..." />
+          {sinSiembra && (
+            <StatusMessage
+              type="empty"
+              message="Este lote no tiene fecha de siembra cargada. El monitoreo se calcula con los grados día acumulados desde la siembra, por lo que estará disponible cuando se registre esa fecha."
+            />
           )}
-          {!cargandoMonitoreo && errorMonitoreo && (
-            <StatusMessage type="error" message="No se pudieron cargar los datos del lote." />
-          )}
-          {!cargandoMonitoreo && !errorMonitoreo && !monitoreo && (
-            <StatusMessage type="empty" message="No hay datos de monitoreo para este lote." />
+          {siembraFutura && lote?.fechaSiembra && (
+            <StatusMessage
+              type="empty"
+              message={`La siembra de este lote está prevista para el ${formatearFecha(lote.fechaSiembra)}. El monitoreo estará disponible a partir de esa fecha.`}
+            />
           )}
 
-          {!cargandoMonitoreo && !errorMonitoreo && monitoreo && (
+          {consultando && !monitoreo && (
+            <StatusMessage type="loading" message="Calculando el estado del cultivo..." />
+          )}
+          {actualizando && (
+            <StatusMessage type="loading" message="Actualizando el estado del cultivo..." />
+          )}
+          {errorMonitoreo && !monitoreo && (
+            <ErrorConReintento
+              error={errorMonitoreo}
+              onReintentar={() => setIntentoMonitoreo((n) => n + 1)}
+            />
+          )}
+          {errorMonitoreo && monitoreo && (
+            <ErrorConReintento
+              error={{
+                ...errorMonitoreo,
+                mensaje: `No se pudieron actualizar los datos. ${errorMonitoreo.mensaje} Se muestran los últimos datos obtenidos.`,
+              }}
+              onReintentar={() => setIntentoMonitoreo((n) => n + 1)}
+            />
+          )}
+
+          {monitoreo && (
             <>
-              {ejecutandoAnalisis && loteSeleccionado && (
-                <StatusMessage
-                  type="loading"
-                  message={`Ejecutando análisis simulado para ${loteSeleccionado.nombre}...`}
-                />
-              )}
-              {errorAnalisis && (
-                <StatusMessage type="error" message="No se pudo ejecutar el análisis. Intentá nuevamente." />
-              )}
-
               <p className="monitoreo__origen">
-                {monitoreo.fechaUltimoAnalisis
-                  ? `Resultado simulado del último análisis · Ejecutado el ${formatearFechaHora(monitoreo.fechaUltimoAnalisis)}`
-                  : 'Valores iniciales simulados. Todavía no se ejecutaron análisis para este lote.'}
+                Estado calculado para el {formatearFecha(monitoreo.fecha)} ·{' '}
+                {monitoreo.diasDesdeSiembra} días desde la siembra
+                {resultadoLote?.obtenidoEn &&
+                  ` · Consultado el ${formatearFechaHora(resultadoLote.obtenidoEn)}`}
               </p>
+
+              {/* Incluye CICLO_CUMPLIDO cuando corresponde, por lo que no se repite ese aviso. */}
+              <AlertasPanel alertas={monitoreo.alertas} />
 
               <div className="stat-grid">
                 <StatCard
                   icon={IconLeaf}
-                  label="GDD acumulado"
-                  value={formatearNumero(monitoreo.indicadores.gdd)}
-                  caption="Grados día acumulados"
+                  label="GDDA acumulado"
+                  value={
+                    <>
+                      {formatearNumero(monitoreo.gddaAcumulado)} <UnidadGradosDia />
+                    </>
+                  }
+                  caption="Grados día acumulados desde la siembra"
                 />
                 <StatCard
                   icon={IconTrend}
-                  label="GDDA"
-                  value={formatearNumero(monitoreo.indicadores.gdda)}
-                  caption="Grados día promedio"
+                  label="GDD de hoy"
+                  value={
+                    <>
+                      {formatearNumero(monitoreo.gddHoy)} <UnidadGradosDia />
+                    </>
+                  }
+                  caption={`Temperatura base: ${formatearNumero(monitoreo.temperaturaBase, 0)} °C`}
                 />
                 <StatCard
                   icon={IconSprout}
                   label="Etapa fenológica estimada"
-                  value={monitoreo.indicadores.etapaFenologica}
-                  caption={monitoreo.indicadores.descripcionEtapa}
+                  value={monitoreo.etapaActual.nombre}
+                  caption={`Monitoreo: ${monitoreo.etapaActual.frecuenciaMonitoreo.toLowerCase()}`}
                 />
                 <StatCard
                   icon={IconShield}
                   label="Riesgo de chinche verde"
-                  value={monitoreo.indicadores.riesgo}
-                  tone={TONO_RIESGO[monitoreo.indicadores.riesgo]}
+                  value={monitoreo.nivelRiesgo}
+                  caption={monitoreo.motivoRiesgo}
+                  tone={tonoRiesgo(monitoreo.nivelRiesgo)}
                 />
               </div>
 
               <div className="monitoreo__detalle">
-                <ClimaPanel clima={monitoreo.clima} />
-                <ProximoMonitoreoCard fecha={monitoreo.proximoMonitoreo} />
+                <ClimaPanel dia={diaActual} proveedor={monitoreo.proveedorClimatico} />
+                <ProximoMonitoreoCard
+                  fecha={monitoreo.proximoMonitoreo.fecha}
+                  motivo={monitoreo.proximoMonitoreo.motivo}
+                />
               </div>
             </>
           )}

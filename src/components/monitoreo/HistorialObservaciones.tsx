@@ -1,39 +1,62 @@
 import { useEffect, useState } from 'react'
 import StatusMessage from '../StatusMessage'
-import { obtenerObservacionesPorLote } from '../../services/monitoreoService'
-import type { Lote, ObservacionCampo } from '../../types/monitoreo'
-import { formatearFecha } from '../../utils/format'
+import ErrorConReintento from './ErrorConReintento'
+import { describirError, type ErrorCarga } from './errores'
+import { obtenerObservaciones } from '../../services/monitoreoService'
+import type { ObservacionApi } from '../../types/monitoreoApi'
+import { formatearFecha, formatearFechaHora, formatearNumero, parsearDecimal } from '../../utils/format'
 
 interface HistorialObservacionesProps {
-  lote: Lote
+  loteId: number
+  loteNombre: string
 }
 
-// Se monta cada vez que se abre el modal, por lo que siempre consulta las observaciones actuales.
-function HistorialObservaciones({ lote }: HistorialObservacionesProps) {
-  const [observaciones, setObservaciones] = useState<ObservacionCampo[] | null>(null)
-  const [error, setError] = useState(false)
+interface Resultado {
+  /** Intento al que corresponde el resultado. */
+  intento: number
+  observaciones: ObservacionApi[] | null
+  error: ErrorCarga | null
+}
+
+function textoGdda(valor: string | null): string {
+  const gdda = parsearDecimal(valor)
+  return gdda === null ? 'Sin dato' : `${formatearNumero(gdda)} °C día`
+}
+
+// Se monta cada vez que se abre el modal (y con key por lote), por lo que siempre consulta
+// las observaciones actuales del lote seleccionado.
+function HistorialObservaciones({ loteId, loteNombre }: HistorialObservacionesProps) {
+  const [intento, setIntento] = useState(0)
+  const [resultado, setResultado] = useState<Resultado | null>(null)
 
   useEffect(() => {
-    let vigente = true
-    obtenerObservacionesPorLote(lote.id)
-      .then((datos) => vigente && setObservaciones(datos))
-      .catch(() => vigente && setError(true))
-    return () => {
-      vigente = false
-    }
-  }, [lote.id])
+    const controller = new AbortController()
+    obtenerObservaciones(loteId, controller.signal)
+      .then((observaciones) => setResultado({ intento, observaciones, error: null }))
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        setResultado({
+          intento,
+          observaciones: null,
+          error: describirError(error, 'el historial de observaciones'),
+        })
+      })
+    return () => controller.abort()
+  }, [loteId, intento])
 
-  if (error) {
-    return <StatusMessage type="error" message="No se pudo cargar el historial de observaciones." />
+  const vigente = resultado?.intento === intento ? resultado : null
+
+  if (!vigente) return <StatusMessage type="loading" message="Cargando observaciones..." />
+  if (vigente.error) {
+    return <ErrorConReintento error={vigente.error} onReintentar={() => setIntento((n) => n + 1)} />
   }
-  if (!observaciones) {
-    return <StatusMessage type="loading" message="Cargando observaciones..." />
-  }
+
+  const observaciones = vigente.observaciones ?? []
   if (observaciones.length === 0) {
     return (
       <StatusMessage
         type="empty"
-        message={`Todavía no existen observaciones registradas para ${lote.nombre}.`}
+        message={`Todavía no hay observaciones registradas para ${loteNombre}.`}
       />
     )
   }
@@ -41,7 +64,7 @@ function HistorialObservaciones({ lote }: HistorialObservacionesProps) {
   return (
     <div className="historial">
       <p className="historial__resumen">
-        {lote.nombre} · {observaciones.length}{' '}
+        {loteNombre} · {observaciones.length}{' '}
         {observaciones.length === 1 ? 'observación registrada' : 'observaciones registradas'}
       </p>
       <ul className="historial__lista">
@@ -49,29 +72,31 @@ function HistorialObservaciones({ lote }: HistorialObservacionesProps) {
           <li key={obs.id} className="historial__item">
             <div className="historial__encabezado">
               <strong>{formatearFecha(obs.fecha)}</strong>
-              <span
-                className={`badge ${obs.presenciaChinche ? 'badge--warning' : 'badge--success'}`}
-              >
-                {obs.presenciaChinche ? 'Presencia' : 'Ausencia'}
+              <span className={`badge ${obs.presencia ? 'badge--warning' : 'badge--success'}`}>
+                {obs.presencia ? 'Presencia' : 'Ausencia'}
               </span>
             </div>
-            {(obs.cantidadObservada !== null || obs.etapaFenologica) && (
-              <dl className="historial__datos">
-                {obs.cantidadObservada !== null && (
-                  <div>
-                    <dt>Cantidad</dt>
-                    <dd>{obs.cantidadObservada.toLocaleString('es-AR')}</dd>
-                  </div>
-                )}
-                {obs.etapaFenologica && (
-                  <div>
-                    <dt>Etapa fenológica</dt>
-                    <dd>{obs.etapaFenologica}</dd>
-                  </div>
-                )}
-              </dl>
-            )}
-            {obs.comentarios && <p className="historial__comentarios">{obs.comentarios}</p>}
+            <dl className="historial__datos">
+              {obs.presencia && obs.densidad !== null && (
+                <div>
+                  <dt>Densidad</dt>
+                  <dd>
+                    {obs.densidad.toLocaleString('es-AR')}{' '}
+                    <small>chinches / 20 golpes de paño</small>
+                  </dd>
+                </div>
+              )}
+              <div>
+                <dt>Etapa estimada</dt>
+                <dd>{obs.etapaEstimada ?? 'Sin dato'}</dd>
+              </div>
+              <div>
+                <dt>GDDA acumulado</dt>
+                <dd>{textoGdda(obs.gddaAcumulado)}</dd>
+              </div>
+            </dl>
+            {obs.observaciones && <p className="historial__comentarios">{obs.observaciones}</p>}
+            <p className="historial__registro">Registrada el {formatearFechaHora(obs.createdAt)}</p>
           </li>
         ))}
       </ul>

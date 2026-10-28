@@ -41,6 +41,13 @@ export function formatearFechaHora(fechaHoraIso: string): string {
   })
 }
 
+/** Convierte un decimal recibido como texto (por ejemplo "812.40"); null si falta o no es válido. */
+export function parsearDecimal(valor: string | number | null | undefined): number | null {
+  if (valor === null || valor === undefined || valor === '') return null
+  const numero = Number(valor)
+  return Number.isFinite(numero) ? numero : null
+}
+
 export function formatearNumero(valor: number, decimales = 1): string {
   return valor.toLocaleString('es-AR', {
     minimumFractionDigits: decimales,

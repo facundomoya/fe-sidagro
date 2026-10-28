@@ -18,6 +18,28 @@
   font-size: 0.85rem;
 }
 
+.monitoreo__error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.monitoreo__error .status-message {
+  flex: 1;
+  min-width: 240px;
+}
+
+.monitoreo__unidad {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.monitoreo__fuente {
+  margin: 14px 0 0;
+  font-size: 0.8rem;
+}
+
 /* Historial de observaciones */
 .historial__resumen {
   margin: 0 0 12px;
@@ -62,6 +84,97 @@
   margin: 0;
   color: var(--text-h);
   font-weight: 600;
+}
+
+.historial__datos dd small {
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* Alertas */
+.alertas__vacio {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.alertas__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alerta {
+  --tone: var(--green-700);
+  --tone-bg: var(--bg);
+  --tone-border: var(--border);
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--tone-border);
+  border-left: 4px solid var(--tone);
+  border-radius: 10px;
+  background: var(--tone-bg);
+}
+
+.alerta--advertencia {
+  --tone: var(--orange-600);
+  --tone-bg: var(--orange-50);
+  --tone-border: #f1dcc0;
+}
+
+.alerta--critica {
+  --tone: var(--red-600);
+  --tone-bg: var(--red-50);
+  --tone-border: #f3c4c4;
+}
+
+.alerta__icono {
+  flex-shrink: 0;
+  color: var(--tone);
+}
+
+.alerta__nivel {
+  color: var(--tone);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.alerta__mensaje {
+  margin: 2px 0 0;
+  color: var(--text-h);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+/* Formulario de observación */
+.observacion-form__aviso {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #f1dcc0;
+  border-radius: 8px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+  font-size: 0.85rem;
+}
+
+.observacion-form__ayuda {
+  font-size: 0.8rem;
+}
+
+/* El spinner necesita contraste sobre el botón verde */
+.observacion-form__spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+.historial__registro {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
 }
 
 .historial__comentarios {

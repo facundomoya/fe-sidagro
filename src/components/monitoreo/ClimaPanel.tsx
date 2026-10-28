@@ -1,10 +1,12 @@
 import type { ComponentType } from 'react'
-import type { CondicionesClimaticas } from '../../types/monitoreo'
+import type { DiaMonitoreo } from '../../types/monitoreoApi'
 import { formatearNumero } from '../../utils/format'
 import { IconDroplet, IconRain, IconThermometer, IconWind } from '../icons/Icons'
 
 interface ClimaPanelProps {
-  clima: CondicionesClimaticas
+  /** Pronóstico del día de hoy; null si el proveedor no lo informó. */
+  dia: DiaMonitoreo | null
+  proveedor: string
 }
 
 interface ClimaItemProps {
@@ -32,44 +34,52 @@ function ClimaItem({ icon: Icon, label, value, unit, caption }: ClimaItemProps) 
   )
 }
 
-function ClimaPanel({ clima }: ClimaPanelProps) {
-  const max = formatearNumero(clima.temperaturaMax)
-  const min = formatearNumero(clima.temperaturaMin)
-
+function ClimaPanel({ dia, proveedor }: ClimaPanelProps) {
   return (
     <section className="card section-card">
       <h2 className="section-card__title">Condiciones climáticas</h2>
-      <p className="section-card__subtitle">Condiciones actuales del lote seleccionado.</p>
-      <div className="clima-grid">
-        <ClimaItem
-          icon={IconThermometer}
-          label="Temperatura"
-          value={formatearNumero(clima.temperatura)}
-          unit="°C"
-          caption={`Máx: ${max} °C · Mín: ${min} °C`}
-        />
-        <ClimaItem
-          icon={IconRain}
-          label="Lluvia"
-          value={formatearNumero(clima.lluvia)}
-          unit="mm"
-          caption="Acumulada hoy"
-        />
-        <ClimaItem
-          icon={IconDroplet}
-          label="Humedad"
-          value={formatearNumero(clima.humedad, 0)}
-          unit="%"
-          caption="HR relativa"
-        />
-        <ClimaItem
-          icon={IconWind}
-          label="Viento"
-          value={formatearNumero(clima.vientoVelocidad)}
-          unit="km/h"
-          caption={`Dirección: ${clima.vientoDireccion}`}
-        />
-      </div>
+      <p className="section-card__subtitle">
+        {dia
+          ? `Pronóstico para hoy en la provincia del lote · ${dia.estadoCielo.descripcion}`
+          : 'No hay datos climáticos disponibles para hoy.'}
+      </p>
+      {dia && (
+        <div className="clima-grid">
+          <ClimaItem
+            icon={IconThermometer}
+            label="Temperatura"
+            value={formatearNumero(dia.temperatura)}
+            unit="°C"
+            caption="Media del día"
+          />
+          <ClimaItem
+            icon={IconRain}
+            label="Precipitación"
+            value={formatearNumero(dia.precipitacion)}
+            unit="mm"
+            caption={
+              dia.probabilidadLluvia === null
+                ? 'Probabilidad no informada'
+                : `Probabilidad: ${formatearNumero(dia.probabilidadLluvia, 0)} %`
+            }
+          />
+          <ClimaItem
+            icon={IconDroplet}
+            label="Humedad"
+            value={formatearNumero(dia.humedad, 0)}
+            unit="%"
+            caption="Relativa, media del día"
+          />
+          <ClimaItem
+            icon={IconWind}
+            label="Viento"
+            value={formatearNumero(dia.viento)}
+            unit="km/h"
+            caption="Máximo del día"
+          />
+        </div>
+      )}
+      <p className="monitoreo__fuente">Datos climáticos: {proveedor}</p>
     </section>
   )
 }

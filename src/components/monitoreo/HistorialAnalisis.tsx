@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import StatusMessage from '../StatusMessage'
-import { TONO_RIESGO } from './riesgo'
+import { TONO_RIESGO_SIMULADO } from './riesgo'
 import { obtenerAnalisisPorLote } from '../../services/monitoreoService'
 import type { AnalisisEjecutado, Lote } from '../../types/monitoreo'
 import { formatearFecha, formatearFechaHora, formatearNumero } from '../../utils/format'
@@ -51,7 +51,7 @@ function HistorialAnalisis({ lote }: HistorialAnalisisProps) {
           <li key={a.id} className="historial__item">
             <div className="historial__encabezado">
               <strong>{formatearFechaHora(a.fechaEjecucion)}</strong>
-              <span className={`badge badge--${TONO_RIESGO[a.indicadores.riesgo]}`}>
+              <span className={`badge badge--${TONO_RIESGO_SIMULADO[a.indicadores.riesgo]}`}>
                 Riesgo {a.indicadores.riesgo}
               </span>
             </div>

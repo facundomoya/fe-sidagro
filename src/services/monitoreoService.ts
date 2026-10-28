@@ -1,6 +1,9 @@
-// Servicio del módulo de monitoreo. Por ahora devuelve datos simulados;
-// cuando el backend defina sus endpoints, reemplazar estas funciones por llamadas reales.
+// Servicio del módulo de monitoreo.
+// obtenerMonitoreo, obtenerObservaciones y crearObservacion usan el backend real.
+// Las demás funciones devuelven datos simulados y se conservan por ahora sin uso en Monitoreo.
+import { apiClient } from './apiClient'
 import { LOTES_MOCK, MONITOREO_MOCK, RESULTADOS_ANALISIS_MOCK } from '../mocks/monitoreoMock'
+import type { Monitoreo, NuevaObservacionApi, ObservacionApi } from '../types/monitoreoApi'
 import type {
   AnalisisEjecutado,
   Lote,
@@ -8,6 +11,28 @@ import type {
   NuevaObservacion,
   ObservacionCampo,
 } from '../types/monitoreo'
+
+/**
+ * Estado del cultivo calculado por el backend: grados día, etapa, riesgo, próximos días y alertas.
+ * Responde 400 si el lote no tiene fecha de siembra o todavía no fue sembrado, y 503 si
+ * el proveedor climático no responde.
+ */
+export function obtenerMonitoreo(loteId: number, signal?: AbortSignal): Promise<Monitoreo> {
+  return apiClient.get<Monitoreo>(`/agro/monitoreo/lotes/${loteId}`, { signal })
+}
+
+/** Observaciones de campo del lote, de la más reciente a la más antigua. */
+export function obtenerObservaciones(loteId: number, signal?: AbortSignal): Promise<ObservacionApi[]> {
+  return apiClient.get<ObservacionApi[]>(`/agro/monitoreo/lotes/${loteId}/observaciones`, { signal })
+}
+
+/** Registra una observación de campo. El backend estima la etapa y el GDDA de esa fecha. */
+export function crearObservacion(
+  loteId: number,
+  observacion: NuevaObservacionApi,
+): Promise<ObservacionApi> {
+  return apiClient.post<ObservacionApi>(`/agro/monitoreo/lotes/${loteId}/observaciones`, observacion)
+}
 
 const DEMORA_SIMULADA_MS = 400
 const DEMORA_ANALISIS_MS = 1800

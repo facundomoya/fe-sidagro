@@ -3,7 +3,10 @@
 // los errores del backend en ApiError con mensajes listos para mostrar.
 import type { ApiErrorBody, ApiResponse } from '../types/api'
 
-const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
+const API_URL = (import.meta.env.VITE_API_URL ?? '').trim().replace(/\/+$/, '')
+
+const MENSAJE_SIN_CONFIGURAR =
+  'No está configurada la dirección del servidor (VITE_API_URL). Revisá el archivo .env.local y reiniciá el frontend.'
 
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Verificá tu conexión e intentá nuevamente.'
 const MENSAJE_RESPUESTA_INVALIDA = 'El servidor devolvió una respuesta inesperada.'
@@ -103,6 +106,8 @@ async function leerJson(respuesta: Response): Promise<unknown> {
 }
 
 async function request<T>(metodo: string, path: string, opciones: OpcionesRequest = {}): Promise<T> {
+  // Sin URL, fetch usaría el propio servidor de Vite y el error sería confuso.
+  if (!API_URL) throw new ApiError(0, [MENSAJE_SIN_CONFIGURAR])
   const headers: Record<string, string> = { Accept: 'application/json' }
   if (opciones.body !== undefined) headers['Content-Type'] = 'application/json'
   const tokenEnviado = tokenActual

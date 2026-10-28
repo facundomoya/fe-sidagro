@@ -36,7 +36,8 @@ export interface ApiErrorBody {
   path: string
   error: {
     message: string | string[]
-    error: string
+    /** Nombre del error HTTP; puede venir null (por ejemplo, en un 401). */
+    error: string | null
     timestamp: string
   }
 }
