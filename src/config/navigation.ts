@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { IconBug, IconDollar, IconSprout } from '../components/icons/Icons'
 
 export const RUTAS = {
+  login: '/login',
   dashboard: '/dashboard-economico',
   simulador: '/simulador-escenarios',
   monitoreo: '/monitoreo-chinche-verde',

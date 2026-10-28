@@ -1,0 +1,108 @@
+.login {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Panel de marca: mismo degradé que el menú lateral */
+.login__marca {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  color: #fff;
+  background: linear-gradient(180deg, var(--green-900) 0%, var(--green-800) 70%, var(--green-700) 100%);
+}
+
+.login__logo {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  color: var(--green-900);
+  background: var(--green-300);
+}
+
+.login__logo svg {
+  width: 30px;
+  height: 30px;
+}
+
+.login__nombre {
+  font-size: 2.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.login__nombre span {
+  color: var(--green-300);
+}
+
+.login__lema {
+  max-width: 360px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
+}
+
+/* Formulario */
+.login__panel {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.login__card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: min(400px, 100%);
+  padding: 32px;
+}
+
+.login__encabezado h1 {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.6rem;
+}
+
+.login__encabezado p {
+  margin: 4px 0 0;
+}
+
+.login__logo--compacto {
+  display: none;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+}
+
+.login__submit {
+  justify-content: center;
+  margin-top: 4px;
+  padding: 11px 16px;
+}
+
+/* El spinner del botón primario necesita contraste sobre el verde */
+.login__submit .btn__spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+@media (max-width: 900px) {
+  .login__marca {
+    display: none;
+  }
+
+  .login__logo--compacto {
+    display: grid;
+  }
+
+  .login__card {
+    padding: 24px;
+  }
+}

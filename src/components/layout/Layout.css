@@ -124,6 +124,45 @@
   color: var(--border-strong);
 }
 
+.header__usuario {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.header__avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--green-700);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.header__usuario-datos {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.header__usuario-datos strong {
+  color: var(--text-h);
+  font-size: 0.9rem;
+}
+
+.header__usuario-datos span {
+  font-size: 0.8rem;
+}
+
+.header__logout {
+  padding: 7px 12px;
+}
+
 .layout__content {
   flex: 1;
   padding: 32px;
@@ -163,6 +202,11 @@
 
   .header {
     padding: 0 16px;
+  }
+
+  .header__usuario-datos,
+  .header__logout span {
+    display: none;
   }
 
   .layout__content {

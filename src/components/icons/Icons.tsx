@@ -188,6 +188,15 @@ export function IconHistory() {
   )
 }
 
+export function IconLogout() {
+  return (
+    <SvgIcon>
+      <path d="M9.5 20.5H6a2 2 0 0 1-2-2v-13a2 2 0 0 1 2-2h3.5" />
+      <path d="M15.5 16.5 20 12l-4.5-4.5M20 12H9.5" />
+    </SvgIcon>
+  )
+}
+
 export function IconClipboard() {
   return (
     <SvgIcon>
