@@ -5,10 +5,12 @@ import { NAV_ITEMS } from '../../config/navigation'
 import { IconLogout, IconMenu } from '../icons/Icons'
 
 interface HeaderProps {
+  /** Si el menú lateral se está mostrando. */
+  menuVisible: boolean
   onMenuClick: () => void
 }
 
-function Header({ onMenuClick }: HeaderProps) {
+function Header({ menuVisible, onMenuClick }: HeaderProps) {
   const { pathname } = useLocation()
   const current = NAV_ITEMS.find((item) => item.path === pathname)
   const { usuario, cerrarSesion } = useAuth()
@@ -25,7 +27,10 @@ function Header({ onMenuClick }: HeaderProps) {
         type="button"
         className="header__menu"
         onClick={onMenuClick}
-        aria-label="Abrir menú"
+        aria-label={menuVisible ? 'Ocultar menú' : 'Mostrar menú'}
+        aria-expanded={menuVisible}
+        aria-controls="menu-lateral"
+        title={menuVisible ? 'Ocultar menú' : 'Mostrar menú'}
       >
         <IconMenu />
       </button>

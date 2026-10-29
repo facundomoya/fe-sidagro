@@ -223,3 +223,20 @@ export function IconClipboard() {
     </SvgIcon>
   )
 }
+
+export function IconMap() {
+  return (
+    <SvgIcon>
+      <path d="M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6 9 4Z" />
+      <path d="M9 4v14M15 6v14" />
+    </SvgIcon>
+  )
+}
+
+export function IconPlus() {
+  return (
+    <SvgIcon>
+      <path d="M12 5v14M5 12h14" />
+    </SvgIcon>
+  )
+}

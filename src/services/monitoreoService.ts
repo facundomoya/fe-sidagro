@@ -1,8 +1,10 @@
 // Servicio del módulo de monitoreo.
-// obtenerMonitoreo, obtenerObservaciones y crearObservacion usan el backend real.
+// obtenerMonitoreo, obtenerObservaciones, obtenerObservacionesPaginadas y crearObservacion
+// usan el backend real.
 // Las demás funciones devuelven datos simulados y se conservan por ahora sin uso en Monitoreo.
 import { apiClient } from './apiClient'
 import { LOTES_MOCK, MONITOREO_MOCK, RESULTADOS_ANALISIS_MOCK } from '../mocks/monitoreoMock'
+import type { Paginado } from '../types/api'
 import type { Monitoreo, NuevaObservacionApi, ObservacionApi } from '../types/monitoreoApi'
 import type {
   AnalisisEjecutado,
@@ -24,6 +26,22 @@ export function obtenerMonitoreo(loteId: number, signal?: AbortSignal): Promise<
 /** Observaciones de campo del lote, de la más reciente a la más antigua. */
 export function obtenerObservaciones(loteId: number, signal?: AbortSignal): Promise<ObservacionApi[]> {
   return apiClient.get<ObservacionApi[]>(`/agro/monitoreo/lotes/${loteId}/observaciones`, { signal })
+}
+
+/**
+ * Una página del historial de observaciones, de la más reciente a la más antigua.
+ * Al enviar `page` el backend responde siempre con el formato paginado (`limit` máximo 100).
+ */
+export function obtenerObservacionesPaginadas(
+  loteId: number,
+  page: number,
+  limit: number,
+  signal?: AbortSignal,
+): Promise<Paginado<ObservacionApi>> {
+  return apiClient.get<Paginado<ObservacionApi>>(`/agro/monitoreo/lotes/${loteId}/observaciones`, {
+    query: { page, limit },
+    signal,
+  })
 }
 
 /** Registra una observación de campo. El backend estima la etapa y el GDDA de esa fecha. */

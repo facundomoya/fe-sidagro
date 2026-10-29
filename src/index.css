@@ -491,3 +491,52 @@ button:hover {
     justify-content: center;
   }
 }
+
+/* Campo de fecha en formato argentino (CampoFecha) */
+.campo-fecha {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.campo-fecha > input[type='text'] {
+  width: 100%;
+  min-width: 0;
+  padding-right: 40px;
+}
+
+.campo-fecha__calendario {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--green-700);
+  transform: translateY(-50%);
+}
+
+.campo-fecha__calendario svg {
+  width: 18px;
+  height: 18px;
+}
+
+.campo-fecha__calendario:disabled {
+  color: var(--text);
+  cursor: not-allowed;
+}
+
+/* Input nativo invisible: solo se usa para abrir el calendario debajo del campo. */
+.campo-fecha > .campo-fecha__nativo {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}

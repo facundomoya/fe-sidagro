@@ -49,3 +49,33 @@ export interface LoteApi {
   provincia: ProvinciaApi
   campania: CampaniaApi
 }
+
+/** Cuerpo de POST /agro/campanias (CreateCampaniaDto). */
+export interface NuevaCampaniaApi {
+  /** Único, hasta 120 caracteres. */
+  nombre: string
+  /** YYYY-MM-DD. */
+  fechaInicio: string
+  /** YYYY-MM-DD; no puede ser anterior a fechaInicio. */
+  fechaFin?: string
+}
+
+/** Cuerpo de POST /agro/lotes (CreateLoteDto). El estado inicial lo define el backend. */
+export interface NuevoLoteApi {
+  /** Hasta 120 caracteres. */
+  nombre: string
+  provinciaId: number
+  campaniaId: number
+  /** Hasta 255 caracteres. */
+  ubicacion?: string
+  /** Hectáreas, número positivo. */
+  superficie?: number
+  /** YYYY-MM-DD. El backend la admite opcional; el frontend la exige. */
+  fechaSiembra?: string
+}
+
+/** Cuerpo de PATCH /agro/lotes/:id cuando solo se completa la fecha de siembra. */
+export interface FechaSiembraApi {
+  /** YYYY-MM-DD. */
+  fechaSiembra: string
+}

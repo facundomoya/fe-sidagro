@@ -2,11 +2,25 @@
 // Las reglas replican las de CreateSimulacionDto y SimulacionService en el backend.
 import type { NivelRiesgoChinche } from '../../types/monitoreoApi'
 import type { DatoClimaticoEntrada, NuevaSimulacionApi } from '../../types/simulacionApi'
+import { esFechaIsoValida } from '../../utils/fechas'
+import { formatearFecha } from '../../utils/format'
 
 export const MAX_DIAS_CLIMATICOS = 7
 export const MAX_OBSERVACIONES = 2000
 
 export const FECHA_REPETIDA = 'Fecha repetida.'
+
+// Mismo criterio que Monitoreo con las observaciones (y que el backend al crear la simulación):
+// el clima del escenario no puede ser anterior a la siembra del lote.
+export const ANTES_DE_SIEMBRA = 'Anterior a la siembra'
+
+/** Sin fecha de siembra no se puede comprobar el criterio anterior, así que no se simula. */
+export const LOTE_SIN_SIEMBRA =
+  'Este lote no tiene fecha de siembra registrada. Completala en Lotes y campañas antes de simular.'
+
+function errorAntesDeSiembra(fechaSiembra: string): string {
+  return `${ANTES_DE_SIEMBRA} (${formatearFecha(fechaSiembra)}).`
+}
 
 export const NIVELES_RIESGO: NivelRiesgoChinche[] = ['Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Muy alto']
 
@@ -57,19 +71,13 @@ export interface ErroresEscenario {
 }
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000
-const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/
 
 function fechaUtc(fechaIso: string): number {
   const [anio, mes, dia] = fechaIso.split('-').map(Number)
   return Date.UTC(anio, mes - 1, dia)
 }
 
-function esFechaValida(fechaIso: string): boolean {
-  if (!FORMATO_FECHA.test(fechaIso)) return false
-  const [anio, mes, dia] = fechaIso.split('-').map(Number)
-  const fecha = new Date(fechaUtc(fechaIso))
-  return fecha.getUTCFullYear() === anio && fecha.getUTCMonth() === mes - 1 && fecha.getUTCDate() === dia
-}
+const esFechaValida = esFechaIsoValida
 
 /** Suma días a una fecha ISO (YYYY-MM-DD). */
 export function sumarDias(fechaIso: string, dias: number): string {
@@ -108,10 +116,18 @@ function validarNumero(texto: string, variable: VariableClimatica): string | und
   return undefined
 }
 
-export function validarEscenario(valores: ValoresEscenario): ErroresEscenario {
+/**
+ * Valida el escenario. `fechaSiembra` es la del lote seleccionado: null si el lote no la
+ * tiene y undefined si todavía no hay lote.
+ */
+export function validarEscenario(
+  valores: ValoresEscenario,
+  fechaSiembra: string | null | undefined,
+): ErroresEscenario {
   const errores: ErroresEscenario = { dias: {} }
 
   if (!valores.loteId) errores.loteId = 'Seleccioná un lote.'
+  else if (fechaSiembra === null) errores.loteId = LOTE_SIN_SIEMBRA
   if (!valores.etapaId) errores.etapaId = 'Seleccioná la etapa fenológica.'
   if (!valores.riesgoObservado) errores.riesgoObservado = 'Indicá el riesgo observado.'
   if (valores.observaciones.length > MAX_OBSERVACIONES) {
@@ -126,7 +142,8 @@ export function validarEscenario(valores: ValoresEscenario): ErroresEscenario {
   for (const dia of valores.dias) {
     const erroresDia: Partial<Record<CampoDia, string>> = {}
     if (!dia.fecha) erroresDia.fecha = 'Obligatoria.'
-    else if (!esFechaValida(dia.fecha)) erroresDia.fecha = 'Fecha inválida.'
+    else if (!esFechaValida(dia.fecha)) erroresDia.fecha = 'Fecha inválida (dd/mm/aaaa).'
+    else if (fechaSiembra && dia.fecha < fechaSiembra) erroresDia.fecha = errorAntesDeSiembra(fechaSiembra)
     else if ((repeticiones.get(dia.fecha) ?? 0) > 1) erroresDia.fecha = FECHA_REPETIDA
 
     for (const variable of LISTA_VARIABLES) {
@@ -158,6 +175,22 @@ export function contarErrores(errores: ErroresEscenario): number {
   const generales = [errores.loteId, errores.etapaId, errores.riesgoObservado, errores.observaciones, errores.serie]
   const deDias = Object.values(errores.dias).reduce((total, dia) => total + Object.keys(dia).length, 0)
   return generales.filter(Boolean).length + deDias
+}
+
+/**
+ * Control final antes de enviar: el lote debe tener fecha de siembra y ningún día de clima
+ * puede ser anterior a ella. Devuelve el motivo del rechazo o null.
+ */
+export function errorDeSiembra(
+  simulacion: NuevaSimulacionApi,
+  fechaSiembra: string | null | undefined,
+): string | null {
+  if (!fechaSiembra) return LOTE_SIN_SIEMBRA
+  const anterior = simulacion.datosClimaticos.find((dia) => dia.fecha < fechaSiembra)
+  if (anterior) {
+    return `El clima del ${formatearFecha(anterior.fecha)} es anterior a la siembra del lote (${formatearFecha(fechaSiembra)}). Corregí las fechas antes de simular.`
+  }
+  return null
 }
 
 /** Arma el cuerpo de POST /agro/simulaciones. Usar solo con un escenario sin errores. */

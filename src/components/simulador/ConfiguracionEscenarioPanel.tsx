@@ -6,8 +6,12 @@ import { fechaHoyIso, formatearFecha } from '../../utils/format'
 import { IconPlay, IconSliders } from '../icons/Icons'
 import ClimaEscenarioTabla from './ClimaEscenarioTabla'
 import { formatearDecimal } from './presentacion'
+import { esFechaIsoValida } from '../../utils/fechas'
 import {
+  ANTES_DE_SIEMBRA,
   FECHA_REPETIDA,
+  LISTA_VARIABLES,
+  LOTE_SIN_SIEMBRA,
   MAX_DIAS_CLIMATICOS,
   MAX_OBSERVACIONES,
   NIVELES_RIESGO,
@@ -40,18 +44,23 @@ const claveDia = (clave: number, campo: CampoDia) => `dia-${clave}-${campo}`
 
 /**
  * Deja solo los errores de los campos que el usuario ya editó. Una fecha repetida
- * se marca en todas las filas involucradas, aunque alguna no se haya editado.
+ * se marca en todas las filas involucradas, aunque alguna no se haya editado. Los
+ * problemas con la fecha de siembra se muestran siempre, porque pueden aparecer al
+ * cambiar de lote sin tocar las fechas.
  */
 function erroresVisibles(errores: ErroresEscenario, tocados: Set<string>): ErroresEscenario {
   const visibles: ErroresEscenario = { dias: {}, serie: errores.serie }
   for (const campo of ['loteId', 'etapaId', 'riesgoObservado', 'observaciones'] as const) {
     if (tocados.has(campo)) visibles[campo] = errores[campo]
   }
+  if (errores.loteId === LOTE_SIN_SIEMBRA) visibles.loteId = errores.loteId
   for (const [clave, erroresDia] of Object.entries(errores.dias)) {
     const filtrados = Object.fromEntries(
       Object.entries(erroresDia).filter(
         ([campo, error]) =>
-          error === FECHA_REPETIDA || tocados.has(claveDia(Number(clave), campo as CampoDia)),
+          error === FECHA_REPETIDA ||
+          error?.startsWith(ANTES_DE_SIEMBRA) ||
+          tocados.has(claveDia(Number(clave), campo as CampoDia)),
       ),
     )
     visibles.dias[Number(clave)] = filtrados
@@ -76,11 +85,11 @@ function ConfiguracionEscenarioPanel({
   const [tocados, setTocados] = useState<Set<string>>(() => new Set())
   const siguienteClave = useRef(1)
 
-  const errores = validarEscenario(valores)
+  const lote = lotes.find((l) => String(l.id) === valores.loteId)
+  const errores = validarEscenario(valores, lote?.fechaSiembra)
   const visibles = erroresVisibles(errores, tocados)
   const pendientes = contarErrores(errores)
 
-  const lote = lotes.find((l) => String(l.id) === valores.loteId)
   const etapa = etapas.find((e) => String(e.id) === valores.etapaId)
   const provincias = [...new Set(lotes.map((l) => l.provincia.nombre))]
 
@@ -97,8 +106,8 @@ function ConfiguracionEscenarioPanel({
       ...prev,
       dias: prev.dias.map((d) => (d.clave === clave ? { ...d, [campo]: valor } : d)),
     }))
-    // La fecha se elige de un calendario: se valida apenas cambia.
-    if (campo === 'fecha') marcarTocado(claveDia(clave, campo))
+    // Una fecha completa se valida apenas cambia; mientras se escribe, recién al salir del campo.
+    if (campo === 'fecha' && esFechaIsoValida(valor)) marcarTocado(claveDia(clave, campo))
   }
 
   function salirDeCampoDia(clave: number, campo: CampoDia) {
@@ -123,7 +132,18 @@ function ConfiguracionEscenarioPanel({
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (procesando || pendientes > 0) return
+    if (procesando) return
+    // Se vuelve a validar con el lote seleccionado justo antes de enviar.
+    const erroresFinales = validarEscenario(valores, lote?.fechaSiembra)
+    if (contarErrores(erroresFinales) > 0) {
+      // Se muestran todos los errores para que se vea qué corregir.
+      const campos: string[] = ['loteId', 'etapaId', 'riesgoObservado', 'observaciones']
+      for (const dia of valores.dias) {
+        for (const campo of ['fecha', ...LISTA_VARIABLES] as CampoDia[]) campos.push(claveDia(dia.clave, campo))
+      }
+      setTocados((prev) => new Set([...prev, ...campos]))
+      return
+    }
     onSimular(construirSimulacion(valores))
   }
 
@@ -268,6 +288,7 @@ function ConfiguracionEscenarioPanel({
             dias={valores.dias}
             errores={visibles.dias}
             errorSerie={visibles.serie}
+            fechaSiembra={lote?.fechaSiembra ?? null}
             onChange={actualizarDia}
             onBlur={salirDeCampoDia}
             onAgregar={agregarDia}

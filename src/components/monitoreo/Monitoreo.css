@@ -55,6 +55,42 @@
   list-style: none;
 }
 
+.historial__lista--cargando {
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.historial__paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.historial__pagina {
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .historial__paginacion {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .historial__paginacion .btn {
+    justify-content: center;
+  }
+
+  .historial__pagina {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+}
+
 .historial__item {
   padding: 14px 16px;
   border: 1px solid var(--border);

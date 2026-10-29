@@ -1,0 +1,214 @@
+/* Lotes y campañas */
+.gestion-confirmacion {
+  margin-bottom: 20px;
+}
+
+/* Pestañas */
+.gestion-pestanias {
+  display: flex;
+  gap: 4px;
+  margin-bottom: -1px;
+  overflow-x: auto;
+}
+
+.gestion-pestanias__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  color: var(--text);
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gestion-pestanias__tab:hover {
+  color: var(--text-h);
+}
+
+.gestion-pestanias__tab:focus-visible {
+  outline: 2px solid var(--green-700);
+  outline-offset: -2px;
+}
+
+.gestion-pestanias__tab--activa {
+  position: relative;
+  border-color: var(--border);
+  color: var(--green-700);
+  background: var(--surface);
+}
+
+.gestion-pestanias__cantidad {
+  min-width: 24px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.gestion-pestanias__tab--activa .gestion-pestanias__cantidad {
+  color: var(--green-700);
+  background: var(--green-50);
+}
+
+.gestion-panel {
+  border-top-left-radius: 0;
+}
+
+/* Barra superior de cada pestaña */
+.gestion-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.gestion-barra__filtro {
+  width: min(100%, 280px);
+}
+
+.gestion-resumen {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+}
+
+.gestion-barra .gestion-resumen {
+  margin: 0;
+}
+
+/* Listados */
+.gestion-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gestion-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-left: 4px solid var(--green-700);
+  box-shadow: none;
+}
+
+.gestion-item--pendiente {
+  border-left-color: var(--orange-600);
+}
+
+.gestion-item__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gestion-item__encabezado h3 {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.gestion-item__datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.gestion-item__datos dt {
+  font-size: 0.8rem;
+}
+
+.gestion-item__datos dd {
+  margin: 2px 0 0;
+  color: var(--text-h);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.gestion-item__sin-dato {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.gestion-item__accion {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* Formularios */
+.gestion-form__fila {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.gestion-aviso {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #f1dcc0;
+  border-radius: 8px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+  font-size: 0.85rem;
+}
+
+.gestion-confirmar {
+  padding: 14px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.gestion-confirmar strong {
+  color: var(--text-h);
+}
+
+.gestion-confirmar ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+.gestion-confirmar li + li {
+  margin-top: 4px;
+}
+
+/* El spinner necesita contraste sobre el botón verde */
+.gestion-form__spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+@media (max-width: 560px) {
+  .gestion-form__fila {
+    grid-template-columns: 1fr;
+  }
+
+  .gestion-barra > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gestion-barra__filtro {
+    width: 100%;
+  }
+
+  .gestion-item__accion {
+    align-self: stretch;
+    justify-content: center;
+  }
+}

@@ -1,10 +1,12 @@
 import { useRef, useState, type FormEvent } from 'react'
 import StatusMessage from '../StatusMessage'
+import CampoFecha from '../CampoFecha'
 import { ApiError } from '../../services/apiClient'
 import { crearObservacion } from '../../services/monitoreoService'
 import type { LoteApi } from '../../types/catalogo'
 import type { NuevaObservacionApi, ObservacionApi } from '../../types/monitoreoApi'
 import { fechaHoyIso, formatearFecha } from '../../utils/format'
+import { esFechaIsoValida } from '../../utils/fechas'
 
 // Límites de CreateObservacionDto en el backend.
 const DENSIDAD_MIN = 1
@@ -33,6 +35,7 @@ function validar(valores: Valores, fechaSiembra: string | null, hoy: string): Er
   const errores: Errores = {}
 
   if (!valores.fecha) errores.fecha = 'Ingresá la fecha de observación.'
+  else if (!esFechaIsoValida(valores.fecha)) errores.fecha = 'Ingresá una fecha válida (dd/mm/aaaa).'
   else if (valores.fecha > hoy) errores.fecha = 'La fecha no puede ser posterior a hoy.'
   else if (fechaSiembra && valores.fecha < fechaSiembra) {
     errores.fecha = `La fecha no puede ser anterior a la siembra (${formatearFecha(fechaSiembra)}).`
@@ -162,14 +165,13 @@ function ObservacionForm({ lote, onCancel, onSaved, onGuardandoChange }: Observa
 
       <label className="form-field">
         <span className="form-field__label">Fecha de observación *</span>
-        <input
-          type="date"
+        <CampoFecha
           value={valores.fecha}
           min={lote.fechaSiembra ?? undefined}
           max={hoy}
-          onChange={(e) => actualizar('fecha', e.target.value)}
+          onChange={(valor) => actualizar('fecha', valor)}
           disabled={guardando}
-          aria-invalid={!!errores.fecha}
+          invalid={!!errores.fecha}
         />
         {errores.fecha && <span className="form-field__error">{errores.fecha}</span>}
       </label>

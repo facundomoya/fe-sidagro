@@ -19,6 +19,7 @@ import {
   reintentarRecomendacion,
 } from '../services/simuladorService'
 import type { EtapaFenologicaApi, LoteApi } from '../types/catalogo'
+import { errorDeSiembra } from '../components/simulador/escenario'
 import type {
   NuevaSimulacionApi,
   SimulacionApi,
@@ -158,6 +159,13 @@ function SimuladorEscenariosPage() {
   // Los pedidos no se cancelan al salir de la página: el backend guarda el escenario igual.
   async function simular(nueva: NuevaSimulacionApi) {
     if (procesandoRef.current) return
+    // Último control antes del POST: el clima no puede ser anterior a la siembra del lote.
+    const lote = catalogo?.lotes.find((l) => l.id === nueva.loteId)
+    const errorSiembra = errorDeSiembra(nueva, lote?.fechaSiembra)
+    if (errorSiembra) {
+      setErrorCrear(errorSiembra)
+      return
+    }
     procesandoRef.current = true
     cancelarConsulta()
     setProceso('crear')

@@ -1,4 +1,6 @@
+import CampoFecha from '../CampoFecha'
 import { IconClose, IconRain } from '../icons/Icons'
+import { formatearFecha } from '../../utils/format'
 import {
   LISTA_VARIABLES,
   MAX_DIAS_CLIMATICOS,
@@ -13,6 +15,8 @@ interface ClimaEscenarioTablaProps {
   /** Errores visibles de cada día (solo los de campos ya editados). */
   errores: ErroresEscenario['dias']
   errorSerie?: string
+  /** Siembra del lote seleccionado: el clima no puede ser anterior a esta fecha. */
+  fechaSiembra: string | null
   onChange: (clave: number, campo: CampoDia, valor: string) => void
   onBlur: (clave: number, campo: CampoDia) => void
   onAgregar: () => void
@@ -24,6 +28,7 @@ function ClimaEscenarioTabla({
   dias,
   errores,
   errorSerie,
+  fechaSiembra,
   onChange,
   onBlur,
   onAgregar,
@@ -37,7 +42,8 @@ function ClimaEscenarioTabla({
       </legend>
       <p className="clima-escenario__ayuda">
         Cargá el clima esperado para el lote: de 1 a {MAX_DIAS_CLIMATICOS} días corridos, sin fechas
-        repetidas.
+        repetidas
+        {fechaSiembra ? ` y desde la siembra (${formatearFecha(fechaSiembra)}).` : '.'}
       </p>
 
       <div className="clima-escenario__encabezado" aria-hidden="true">
@@ -60,12 +66,12 @@ function ClimaEscenarioTabla({
 
               <label className="clima-dia__campo clima-dia__campo--fecha">
                 <span className="clima-dia__etiqueta">Fecha</span>
-                <input
-                  type="date"
+                <CampoFecha
                   value={dia.fecha}
-                  onChange={(e) => onChange(dia.clave, 'fecha', e.target.value)}
+                  min={fechaSiembra ?? undefined}
+                  onChange={(valor) => onChange(dia.clave, 'fecha', valor)}
                   onBlur={() => onBlur(dia.clave, 'fecha')}
-                  aria-invalid={!!erroresDia.fecha}
+                  invalid={!!erroresDia.fecha}
                   aria-label={`Fecha del día ${numero}`}
                 />
                 {erroresDia.fecha && <span className="form-field__error">{erroresDia.fecha}</span>}

@@ -1,6 +1,11 @@
 .layout {
+  --menu-duracion: 280ms;
+  --menu-curva: cubic-bezier(0.4, 0, 0.2, 1);
+
   display: flex;
   min-height: 100vh;
+  /* Evita scroll horizontal mientras el menú se desliza (clip no rompe el position: sticky). */
+  overflow-x: clip;
 }
 
 /* Sidebar */
@@ -101,8 +106,35 @@
 }
 
 .header__menu {
-  display: none;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-left: -8px;
   color: var(--text-h);
+}
+
+/* Escritorio: el menú oculto no deja espacio reservado. */
+/*
+ * Escritorio: el menú se desliza hacia la izquierda con un margen negativo. Como es un ítem
+ * del flex, el contenido gana ese mismo ancho en cada cuadro y ambos se mueven sincronizados.
+ * La visibilidad cambia al terminar el cierre, para que el menú oculto no reciba el foco.
+ */
+@media (min-width: 901px) {
+  .sidebar {
+    transition:
+      margin-left var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear 0s;
+  }
+
+  .layout--sin-menu .sidebar {
+    margin-left: calc(-1 * var(--sidebar-width));
+    visibility: hidden;
+    transition:
+      margin-left var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear var(--menu-duracion);
+  }
 }
 
 .header__breadcrumb {
@@ -178,26 +210,49 @@
     position: fixed;
     left: 0;
     z-index: 20;
+    visibility: hidden;
     transform: translateX(-100%);
-    transition: transform 0.2s ease;
+    transition:
+      transform var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear var(--menu-duracion);
   }
 
   .sidebar--open {
+    visibility: visible;
     transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+    transition:
+      transform var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear 0s;
   }
 
-  .sidebar__close,
-  .header__menu {
+  .sidebar__close {
     display: grid;
     place-items: center;
   }
 
+  /* El fondo oscuro siempre está montado: aparece y desaparece con la opacidad. */
   .layout__overlay {
     position: fixed;
     inset: 0;
     z-index: 10;
     display: block;
     background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear var(--menu-duracion);
+  }
+
+  .layout__overlay--visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity var(--menu-duracion) var(--menu-curva),
+      visibility 0s linear 0s;
   }
 
   .header {
@@ -211,5 +266,22 @@
 
   .layout__content {
     padding: 20px 16px;
+  }
+}
+
+/* Al cruzar el breakpoint el menú cambia de modo sin animarse, para evitar parpadeos. */
+.layout--sin-transicion .sidebar,
+.layout--sin-transicion .layout__overlay {
+  transition: none;
+}
+
+/* Bloquea el scroll del contenido mientras el menú móvil está abierto. */
+body.menu-movil-abierto {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layout {
+    --menu-duracion: 0ms;
   }
 }
