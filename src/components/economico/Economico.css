@@ -1,0 +1,470 @@
+/* Dashboard económico */
+.economico,
+.economico__datos {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.economico__datos {
+  transition: opacity 0.15s;
+}
+
+.economico__datos--cargando > :not(.status-message) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.economico-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.economico-seccion__titulo {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.1rem;
+}
+
+.economico-seccion__nota {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.economico-seccion__nota--aviso {
+  color: var(--orange-600);
+}
+
+/* Filtros */
+.economico-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  padding: 16px 20px;
+}
+
+.economico-filtros .form-field {
+  width: min(100%, 260px);
+}
+
+.economico-filtros__aviso {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.economico-filtros__aviso[role='alert'] {
+  color: var(--red-600);
+}
+
+.economico-filtros__reintentar {
+  padding: 0;
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Avisos del backend */
+.economico-avisos {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid #f1dcc0;
+  border-radius: 12px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+  font-size: 0.9rem;
+}
+
+.economico-avisos svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.economico-avisos ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Referencias del mercado */
+.economico-referencias {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.economico-referencias .stat-card {
+  align-items: flex-start;
+}
+
+/* Los importes en USD son largos: un tamaño algo menor evita cortes innecesarios. */
+.economico .stat-card__value {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 1280px) {
+  .economico-referencias {
+    grid-template-columns: 1fr;
+  }
+}
+
+.economico-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.economico-detalle__badge {
+  align-self: flex-start;
+  margin: 2px 0 4px;
+}
+
+.economico-badge--equilibrio {
+  color: var(--text-h);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Resumen de los totales */
+.economico-resumen {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.economico-resumen dt {
+  font-size: 0.8rem;
+}
+
+.economico-resumen dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+@media (max-width: 1280px) {
+  .economico-resumen {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .economico-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Importes con signo: el color acompaña al signo y a la etiqueta del resultado. */
+.economico-importe--positivo {
+  color: var(--green-700);
+}
+
+.economico-importe--negativo {
+  color: var(--red-600);
+}
+
+/* Listado de lotes */
+.economico-lotes__encabezado,
+.economico-lotes__fila {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.9fr)
+    minmax(0, 1.1fr) minmax(0, 1.2fr) minmax(150px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.economico-lotes__encabezado {
+  margin-bottom: 8px;
+  padding: 0 14px;
+  color: var(--text-h);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.economico-lotes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.economico-lotes__fila {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.economico-lotes__fila:hover {
+  border-color: var(--border-strong);
+  background: var(--bg);
+}
+
+.economico-lotes__fila:focus-visible {
+  outline: 2px solid var(--green-700);
+  outline-offset: 1px;
+}
+
+.economico-lotes__fila--incompleta {
+  border-color: #f1dcc0;
+  box-shadow: inset 3px 0 0 var(--orange-600);
+}
+
+.economico-lotes__celda {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.economico-lotes__celda--lote {
+  color: var(--text-h);
+}
+
+.economico-lotes__celda--resultado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.economico-lotes__faltan {
+  color: var(--orange-600);
+  font-size: 0.8rem;
+}
+
+.economico-lotes__sin-dato {
+  color: var(--text);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Las etiquetas solo se ven en pantallas chicas; en las anchas las leen los lectores de pantalla. */
+.economico-lotes__etiqueta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* En pantallas medianas y chicas cada lote se muestra como una tarjeta. */
+@media (max-width: 1100px) {
+  .economico-lotes__encabezado {
+    display: none;
+  }
+
+  .economico-lotes__fila {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 16px;
+    padding: 12px 14px;
+  }
+
+  .economico-lotes__celda--lote,
+  .economico-lotes__celda--resultado {
+    grid-column: 1 / -1;
+  }
+
+  .economico-lotes__celda--resultado {
+    grid-row: 2;
+  }
+
+  .economico-lotes__celda:not(.economico-lotes__celda--lote, .economico-lotes__celda--resultado) {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .economico-lotes__etiqueta {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: 0.75rem;
+  }
+}
+
+/* Detalle de un lote */
+.economico-detalle-lote {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.economico-detalle-lote__datos,
+.economico-detalle-lote__indicadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.economico-detalle-lote__indicadores {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.economico-detalle-lote dt {
+  font-size: 0.8rem;
+}
+
+.economico-detalle-lote dd {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.economico-detalle-lote dd.economico-importe--positivo {
+  color: var(--green-700);
+}
+
+.economico-detalle-lote dd.economico-importe--negativo {
+  color: var(--red-600);
+}
+
+.economico-detalle-lote__resultado {
+  margin: 0;
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.economico-detalle-lote__subtitulo {
+  margin: 0 0 -6px;
+  color: var(--text-h);
+  font-size: 0.95rem;
+}
+
+.economico-detalle-lote__incompleto {
+  padding: 12px 14px;
+  border: 1px solid #f1dcc0;
+  border-radius: 10px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+}
+
+.economico-detalle-lote__incompleto p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 420px) {
+  .economico-detalle-lote__datos,
+  .economico-detalle-lote__indicadores {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Próximamente */
+.economico-proximamente {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+}
+
+.economico-proximamente ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+/* Confirmación de un registro y error del dashboard */
+.economico-confirmacion {
+  margin-bottom: 20px;
+}
+
+.economico-error {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Costos de producción */
+.economico-costos__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.economico-costos__titulo .section-card__title {
+  margin-bottom: 4px;
+}
+
+.economico-costos__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.economico-costos__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border-strong);
+  border-radius: 10px;
+}
+
+.economico-costos__item--vigente {
+  border-left-color: var(--green-700);
+  background: var(--green-50);
+}
+
+.economico-costos__item--futuro {
+  border-left-color: var(--orange-600);
+}
+
+.economico-costos__encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.economico-costos__encabezado strong {
+  color: var(--text-h);
+  font-size: 1.1rem;
+}
+
+.economico-costos__vigencia,
+.economico-costos__texto {
+  margin: 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.economico-costos__texto span {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .economico-costos__titulo .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

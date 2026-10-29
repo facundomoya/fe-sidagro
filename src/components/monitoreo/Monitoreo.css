@@ -368,3 +368,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.lote-selector__sin-dato {
+  color: var(--text);
+  font-weight: 400;
+}

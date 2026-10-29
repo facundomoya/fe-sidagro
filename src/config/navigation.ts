@@ -10,6 +10,11 @@ export const RUTAS = {
   lotesCampanias: '/lotes-y-campanias',
 } as const
 
+/** Estado de navegación para abrir «Lotes y campañas» en el formulario de datos productivos. */
+export interface EstadoCompletarDatos {
+  completarDatosLoteId: number
+}
+
 export interface NavItem {
   path: string
   label: string
@@ -28,5 +33,21 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { path: RUTAS.monitoreo, label: 'Monitoreo de chinche verde', icon: IconBug },
   { path: RUTAS.simulador, label: 'Simulador de escenarios', icon: IconSprout },
-  { path: RUTAS.dashboard, label: 'Dashboard económico', icon: IconDollar },
+  {
+    path: RUTAS.dashboard,
+    label: 'Dashboard económico',
+    icon: IconDollar,
+    permiso: PERMISOS.consultarEconomico,
+  },
 ]
+
+/**
+ * Pantalla a la que se llega después del login o con una dirección desconocida: el Dashboard
+ * económico si el usuario puede consultarlo, si no la primera opción del menú que tenga habilitada.
+ */
+export function rutaInicial(tienePermiso: (permiso: string) => boolean): string {
+  const disponible = (item: NavItem) => !item.permiso || tienePermiso(item.permiso)
+  const dashboard = NAV_ITEMS.find((item) => item.path === RUTAS.dashboard)
+  if (dashboard && disponible(dashboard)) return dashboard.path
+  return NAV_ITEMS.find(disponible)?.path ?? RUTAS.monitoreo
+}

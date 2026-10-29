@@ -3,6 +3,9 @@ import { apiClient } from './apiClient'
 import type { ListaCompleta } from '../types/api'
 import type {
   CampaniaApi,
+  DatosProductivosApi,
+  DepartamentoApi,
+  DepartamentoLoteApi,
   EtapaFenologicaApi,
   FechaSiembraApi,
   LoteApi,
@@ -48,6 +51,18 @@ export async function obtenerProvincias(signal?: AbortSignal): Promise<Provincia
   return data
 }
 
+/** Departamentos de una provincia, ordenados por nombre. Responde 404 si la provincia no existe. */
+export async function obtenerDepartamentos(
+  provinciaId: number,
+  signal?: AbortSignal,
+): Promise<DepartamentoApi[]> {
+  const { data } = await apiClient.get<ListaCompleta<DepartamentoApi>>(
+    `/agro/provincias/${provinciaId}/departamentos`,
+    { signal },
+  )
+  return data
+}
+
 /** Crea una campaña. Responde 409 si ya existe una con el mismo nombre. */
 export async function crearCampania(campania: NuevaCampaniaApi): Promise<CampaniaApi> {
   const creada = await apiClient.post<CampaniaApi>('/agro/campanias', campania)
@@ -62,5 +77,15 @@ export function crearLote(lote: NuevoLoteApi): Promise<LoteApi> {
 
 /** Registra la fecha de siembra de un lote; solo se envía ese campo. */
 export function registrarFechaSiembra(loteId: number, cambios: FechaSiembraApi): Promise<LoteApi> {
+  return apiClient.patch<LoteApi>(`/agro/lotes/${loteId}`, cambios)
+}
+
+/** Completa la superficie y/o el rendimiento de un lote; solo se envían esos campos. */
+export function completarDatosProductivos(loteId: number, datos: DatosProductivosApi): Promise<LoteApi> {
+  return apiClient.patch<LoteApi>(`/agro/lotes/${loteId}`, datos)
+}
+
+/** Asigna el departamento de un lote que no tiene; solo se envía ese campo. */
+export function completarDepartamento(loteId: number, cambios: DepartamentoLoteApi): Promise<LoteApi> {
   return apiClient.patch<LoteApi>(`/agro/lotes/${loteId}`, cambios)
 }

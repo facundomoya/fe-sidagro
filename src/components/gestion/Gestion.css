@@ -144,8 +144,10 @@
   font-weight: 400;
 }
 
-.gestion-item__accion {
-  align-self: flex-start;
+.gestion-item__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: auto;
 }
 
@@ -154,6 +156,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.gestion-form__nota {
+  margin: 0;
+  font-size: 0.85rem;
 }
 
 .gestion-aviso {
@@ -207,8 +214,21 @@
     width: 100%;
   }
 
-  .gestion-item__accion {
-    align-self: stretch;
+  .gestion-item__acciones .btn {
+    flex: 1 1 100%;
     justify-content: center;
   }
+}
+
+/* Selector de departamento dependiente de la provincia */
+.selector-departamento__ayuda {
+  align-self: stretch;
+  font-size: 0.8rem;
+}
+
+.selector-departamento__reintentar {
+  padding: 0;
+  color: var(--green-700);
+  font-weight: 600;
+  text-decoration: underline;
 }

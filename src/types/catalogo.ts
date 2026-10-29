@@ -10,6 +10,19 @@ export interface ProvinciaApi {
   longitud: string
 }
 
+/**
+ * Departamento de una provincia (GET /agro/provincias/:id/departamentos). Sus coordenadas son
+ * las que usa el backend para pedir el clima del monitoreo de los lotes de la zona.
+ */
+export interface DepartamentoApi {
+  id: number
+  nombre: string
+  /** Texto decimal. */
+  latitud: string
+  /** Texto decimal. */
+  longitud: string
+}
+
 export interface CampaniaApi {
   id: number
   nombre: string
@@ -43,10 +56,17 @@ export interface LoteApi {
   ubicacion: string | null
   /** Hectáreas como texto decimal. */
   superficie: string | null
+  /** Rendimiento esperado en t/ha como texto decimal. Lo usa el módulo económico. */
+  rendimiento: string | null
   /** Fecha en formato YYYY-MM-DD. Necesaria para calcular el monitoreo. */
   fechaSiembra: string | null
   estado: EstadoLote
   provincia: ProvinciaApi
+  /**
+   * null en los lotes sin departamento (por ejemplo, los creados antes de su incorporación):
+   * el monitoreo usa entonces el clima de la capital provincial.
+   */
+  departamento: DepartamentoApi | null
   campania: CampaniaApi
 }
 
@@ -65,11 +85,15 @@ export interface NuevoLoteApi {
   /** Hasta 120 caracteres. */
   nombre: string
   provinciaId: number
+  /** Departamento de esa provincia. El backend lo admite opcional y valida que pertenezca a ella. */
+  departamentoId?: number
   campaniaId: number
   /** Hasta 255 caracteres. */
   ubicacion?: string
   /** Hectáreas, número positivo. */
   superficie?: number
+  /** t/ha, mayor que cero, hasta 10 y con dos decimales como máximo. */
+  rendimiento?: number
   /** YYYY-MM-DD. El backend la admite opcional; el frontend la exige. */
   fechaSiembra?: string
 }
@@ -78,4 +102,20 @@ export interface NuevoLoteApi {
 export interface FechaSiembraApi {
   /** YYYY-MM-DD. */
   fechaSiembra: string
+}
+
+/**
+ * Cuerpo de PATCH /agro/lotes/:id al completar los datos productivos. Solo se envían los
+ * campos que faltaban y se cargaron; nunca null.
+ */
+export interface DatosProductivosApi {
+  /** Hectáreas, número positivo. */
+  superficie?: number
+  /** t/ha, mayor que cero y hasta 10. */
+  rendimiento?: number
+}
+
+/** Cuerpo de PATCH /agro/lotes/:id cuando solo se completa el departamento. */
+export interface DepartamentoLoteApi {
+  departamentoId: number
 }

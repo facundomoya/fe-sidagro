@@ -1,5 +1,6 @@
 import type { LoteApi } from '../../types/catalogo'
 import { formatearFecha } from '../../utils/format'
+import { SIN_DEPARTAMENTO } from '../gestion/presentacion'
 
 interface LoteSelectorProps {
   lotes: LoteApi[]
@@ -41,6 +42,10 @@ function LoteSelector({ lotes, loteSeleccionadoId, onChange, disabled }: LoteSel
           <div>
             <dt>Provincia</dt>
             <dd>{lote.provincia.nombre}</dd>
+          </div>
+          <div>
+            <dt>Departamento</dt>
+            <dd>{lote.departamento?.nombre ?? <span className="lote-selector__sin-dato">{SIN_DEPARTAMENTO}</span>}</dd>
           </div>
           <div>
             <dt>Campaña</dt>

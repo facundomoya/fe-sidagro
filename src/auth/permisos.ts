@@ -6,4 +6,6 @@ export const PERMISOS = {
   crearLote: 'LOTE_POST',
   modificarLote: 'LOTE_PUT',
   consultarMonitoreo: 'MONITOREO_GET',
+  consultarEconomico: 'ECONOMICO_GET',
+  registrarCosto: 'COSTO_POST',
 } as const

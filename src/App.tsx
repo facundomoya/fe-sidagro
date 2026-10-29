@@ -6,7 +6,14 @@ import DashboardEconomicoPage from './pages/DashboardEconomicoPage'
 import SimuladorEscenariosPage from './pages/SimuladorEscenariosPage'
 import MonitoreoChinchePage from './pages/MonitoreoChinchePage'
 import LotesCampaniasPage from './pages/LotesCampaniasPage'
-import { RUTAS } from './config/navigation'
+import { useAuth } from './auth/useAuth'
+import { RUTAS, rutaInicial } from './config/navigation'
+
+/** Direcciones desconocidas: a la primera pantalla habilitada para el usuario. */
+function RedireccionInicial() {
+  const { tienePermiso } = useAuth()
+  return <Navigate to={rutaInicial(tienePermiso)} replace />
+}
 
 function App() {
   return (
@@ -18,7 +25,7 @@ function App() {
           <Route path={RUTAS.simulador} element={<SimuladorEscenariosPage />} />
           <Route path={RUTAS.monitoreo} element={<MonitoreoChinchePage />} />
           <Route path={RUTAS.lotesCampanias} element={<LotesCampaniasPage />} />
-          <Route path="*" element={<Navigate to={RUTAS.dashboard} replace />} />
+          <Route path="*" element={<RedireccionInicial />} />
         </Route>
       </Route>
     </Routes>

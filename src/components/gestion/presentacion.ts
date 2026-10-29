@@ -25,6 +25,14 @@ export function textoSuperficie(superficie: string | null): string | null {
   return valor === null ? null : `${formatearNumero(valor, 2)} ha`
 }
 
+export function textoRendimiento(rendimiento: string | null): string | null {
+  const valor = parsearDecimal(rendimiento)
+  return valor === null ? null : `${formatearNumero(valor, 2)} t/ha`
+}
+
+/** Lotes sin departamento: el backend pide el clima del monitoreo en la capital provincial. */
+export const SIN_DEPARTAMENTO = 'Sin departamento · clima de la capital provincial'
+
 export const ESTADO_LOTE: Record<string, { texto: string; clase: string }> = {
   ACTIVO: { texto: 'Activo', clase: 'badge badge--success' },
   INACTIVO: { texto: 'Inactivo', clase: 'badge badge--danger' },

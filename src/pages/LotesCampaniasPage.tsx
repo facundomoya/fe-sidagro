@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type KeyboardEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import StatusMessage from '../components/StatusMessage'
@@ -10,14 +11,17 @@ import ListaCampanias from '../components/gestion/ListaCampanias'
 import LoteForm from '../components/gestion/LoteForm'
 import CampaniaForm from '../components/gestion/CampaniaForm'
 import FechaSiembraForm from '../components/gestion/FechaSiembraForm'
+import DatosProductivosForm from '../components/gestion/DatosProductivosForm'
+import DepartamentoForm from '../components/gestion/DepartamentoForm'
 import { errorDeCarga } from '../components/gestion/errores'
 import { lotesPorCampania, ordenarCampanias, ordenarLotes } from '../components/gestion/presentacion'
 import { IconCalendar, IconMap, IconPlus } from '../components/icons/Icons'
 import { useAuth } from '../auth/useAuth'
 import { PERMISOS } from '../auth/permisos'
+import type { EstadoCompletarDatos } from '../config/navigation'
 import { obtenerCampanias, obtenerLotes, obtenerProvincias } from '../services/catalogoService'
 import type { CampaniaApi, LoteApi, ProvinciaApi } from '../types/catalogo'
-import { formatearFecha } from '../utils/format'
+import { formatearFecha, formatearNumero, parsearDecimal } from '../utils/format'
 import '../components/gestion/Gestion.css'
 
 type Pestania = 'lotes' | 'campanias'
@@ -27,7 +31,13 @@ const PESTANIAS: { id: Pestania; texto: string }[] = [
   { id: 'campanias', texto: 'Campañas' },
 ]
 
-type ModalActivo = { tipo: 'lote' } | { tipo: 'campania' } | { tipo: 'siembra'; lote: LoteApi } | null
+type ModalActivo =
+  | { tipo: 'lote' }
+  | { tipo: 'campania' }
+  | { tipo: 'siembra'; lote: LoteApi }
+  | { tipo: 'datos'; lote: LoteApi }
+  | { tipo: 'departamento'; lote: LoteApi }
+  | null
 
 interface Datos {
   lotes: LoteApi[]
@@ -51,6 +61,15 @@ function LotesCampaniasPage() {
   const puedeVerificarObservaciones = tienePermiso(PERMISOS.consultarMonitoreo)
   // Completar la siembra exige comprobar antes las observaciones del lote (MONITOREO_GET).
   const puedeCompletarSiembra = tienePermiso(PERMISOS.modificarLote) && puedeVerificarObservaciones
+  const puedeCompletarDatos = tienePermiso(PERMISOS.modificarLote)
+  const puedeCompletarDepartamento = tienePermiso(PERMISOS.modificarLote)
+
+  // El Dashboard económico puede abrir esta pantalla para completar los datos de un lote.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [loteACompletar, setLoteACompletar] = useState(
+    () => (location.state as EstadoCompletarDatos | null)?.completarDatosLoteId ?? null,
+  )
 
   const [pestania, setPestania] = useState<Pestania>('lotes')
   const [intento, setIntento] = useState(0)
@@ -84,6 +103,23 @@ function LotesCampaniasPage() {
 
   const vigente = resultado?.intento === intento ? resultado : null
   const datos = vigente?.datos ?? null
+
+  // Cuando llegan los lotes, se abre el formulario del lote pedido desde el Dashboard.
+  if (loteACompletar !== null && datos) {
+    setLoteACompletar(null)
+    const lote = datos.lotes.find((l) => l.id === loteACompletar)
+    if (lote && puedeCompletarDatos) {
+      setModal({ tipo: 'datos', lote })
+      setCampaniaFiltro(TODAS)
+    }
+  }
+
+  // El pedido del Dashboard se usa una sola vez: no vuelve a abrirse al recargar la página.
+  useEffect(() => {
+    if ((location.state as EstadoCompletarDatos | null)?.completarDatosLoteId) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location, navigate])
 
   function actualizarDatos(cambio: (datos: Datos) => Datos) {
     setResultado((prev) => (prev?.datos ? { ...prev, datos: cambio(prev.datos) } : prev))
@@ -130,6 +166,27 @@ function LotesCampaniasPage() {
     avisar(
       lote.fechaSiembra
         ? `Se registró el ${formatearFecha(lote.fechaSiembra)} como fecha de siembra de «${lote.nombre}».`
+        : `Se actualizó el lote «${lote.nombre}».`,
+    )
+  }
+
+  function handleDatosRegistrados(lote: LoteApi) {
+    handleLoteActualizado(lote)
+    const partes: string[] = []
+    const superficie = parsearDecimal(lote.superficie)
+    const rendimiento = parsearDecimal(lote.rendimiento)
+    if (superficie !== null) partes.push(`superficie ${formatearNumero(superficie, 2)} ha`)
+    if (rendimiento !== null) partes.push(`rendimiento esperado ${formatearNumero(rendimiento, 2)} t/ha`)
+    avisar(
+      `Se actualizaron los datos productivos de «${lote.nombre}»${partes.length ? `: ${partes.join(' y ')}` : ''}. El Dashboard económico los usará en su próxima consulta.`,
+    )
+  }
+
+  function handleDepartamentoAsignado(lote: LoteApi) {
+    handleLoteActualizado(lote)
+    avisar(
+      lote.departamento
+        ? `Se asignó el departamento ${lote.departamento.nombre} a «${lote.nombre}». El Monitoreo usará el clima de ese departamento.`
         : `Se actualizó el lote «${lote.nombre}».`,
     )
   }
@@ -223,6 +280,10 @@ function LotesCampaniasPage() {
               lotes={visibles}
               puedeCompletarSiembra={puedeCompletarSiembra}
               onCompletarSiembra={(lote) => setModal({ tipo: 'siembra', lote })}
+              puedeCompletarDatos={puedeCompletarDatos}
+              onCompletarDatos={(lote) => setModal({ tipo: 'datos', lote })}
+              puedeCompletarDepartamento={puedeCompletarDepartamento}
+              onCompletarDepartamento={(lote) => setModal({ tipo: 'departamento', lote })}
             />
           </>
         )}
@@ -345,6 +406,44 @@ function LotesCampaniasPage() {
                 puedeVerificarObservaciones={puedeVerificarObservaciones}
                 onCancel={cerrarModal}
                 onSaved={handleSiembraRegistrada}
+                onLoteActualizado={handleLoteActualizado}
+                onGuardandoChange={setGuardando}
+              />
+            )}
+          </Modal>
+
+          <Modal
+            open={modal?.tipo === 'datos'}
+            title="Completar datos productivos"
+            onClose={cerrarModal}
+            bloqueado={guardando}
+          >
+            {modal?.tipo === 'datos' && (
+              <DatosProductivosForm
+                key={modal.lote.id}
+                // Se usa la versión del listado, que se actualiza si otro usuario cargó datos.
+                lote={datos.lotes.find((l) => l.id === modal.lote.id) ?? modal.lote}
+                onCancel={cerrarModal}
+                onSaved={handleDatosRegistrados}
+                onLoteActualizado={handleLoteActualizado}
+                onGuardandoChange={setGuardando}
+              />
+            )}
+          </Modal>
+
+          <Modal
+            open={modal?.tipo === 'departamento'}
+            title="Completar departamento"
+            onClose={cerrarModal}
+            bloqueado={guardando}
+          >
+            {modal?.tipo === 'departamento' && (
+              <DepartamentoForm
+                key={modal.lote.id}
+                // Se usa la versión del listado, que se actualiza si otro usuario asignó el departamento.
+                lote={datos.lotes.find((l) => l.id === modal.lote.id) ?? modal.lote}
+                onCancel={cerrarModal}
+                onSaved={handleDepartamentoAsignado}
                 onLoteActualizado={handleLoteActualizado}
                 onGuardandoChange={setGuardando}
               />

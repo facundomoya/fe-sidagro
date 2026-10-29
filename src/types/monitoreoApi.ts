@@ -34,6 +34,8 @@ export interface LoteMonitoreo {
   fechaSiembra: string
   /** Nombre de la provincia. */
   provincia: string
+  /** Nombre del departamento; null si el lote no tiene. */
+  departamento?: string | null
   /** Nombre de la campaña. */
   campania: string
 }
@@ -117,6 +119,18 @@ export interface NuevaObservacionApi {
   observaciones?: string
 }
 
+/**
+ * Lugar donde el backend pidió el clima: el departamento del lote o, si no tiene, la capital
+ * de la provincia (monitoreo.service.ts, ubicacionClima).
+ */
+export interface UbicacionClima {
+  origen: 'DEPARTAMENTO' | 'CAPITAL'
+  /** Nombre del departamento, o "Capital de <provincia>". */
+  nombre: string
+  latitud: number
+  longitud: number
+}
+
 /** Respuesta de GET /agro/monitoreo/lotes/:loteId. */
 export interface Monitoreo {
   lote: LoteMonitoreo
@@ -125,6 +139,8 @@ export interface Monitoreo {
   /** Temperatura base de la soja (°C). */
   temperaturaBase: number
   proveedorClimatico: string
+  /** Opcional por compatibilidad con versiones del backend anteriores a los departamentos. */
+  ubicacionClima?: UbicacionClima
   diasDesdeSiembra: number
   gddHoy: number
   gddaAcumulado: number

@@ -337,7 +337,11 @@ function MonitoreoChinchePage() {
               </div>
 
               <div className="monitoreo__detalle">
-                <ClimaPanel dia={diaActual} proveedor={monitoreo.proveedorClimatico} />
+                <ClimaPanel
+                  dia={diaActual}
+                  proveedor={monitoreo.proveedorClimatico}
+                  ubicacion={monitoreo.ubicacionClima}
+                />
                 <ProximoMonitoreoCard
                   fecha={monitoreo.proximoMonitoreo.fecha}
                   motivo={monitoreo.proximoMonitoreo.motivo}
