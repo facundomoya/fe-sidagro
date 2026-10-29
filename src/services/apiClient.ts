@@ -9,6 +9,7 @@ const MENSAJE_SIN_CONFIGURAR =
   'No está configurada la dirección del servidor (VITE_API_URL). Revisá el archivo .env.local y reiniciá el frontend.'
 
 const MENSAJE_SIN_CONEXION = 'No se pudo conectar con el servidor. Verificá tu conexión e intentá nuevamente.'
+const MENSAJE_SIN_RESPUESTA = 'El servidor tardó demasiado en responder.'
 const MENSAJE_RESPUESTA_INVALIDA = 'El servidor devolvió una respuesta inesperada.'
 
 /** Mensajes por defecto cuando el backend no informa un error.message. */
@@ -124,6 +125,9 @@ async function request<T>(metodo: string, path: string, opciones: OpcionesReques
   } catch (error) {
     // La cancelación no es un error de conexión: se propaga para que quien llamó la ignore.
     if (error instanceof DOMException && error.name === 'AbortError') throw error
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new ApiError(0, [MENSAJE_SIN_RESPUESTA])
+    }
     throw new ApiError(0, [MENSAJE_SIN_CONEXION])
   }
 

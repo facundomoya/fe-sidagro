@@ -1,8 +1,16 @@
+/* La configuración ocupa la columna izquierda; resultado y recomendación, la derecha. */
 .simulador {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
+}
+
+.simulador__resultados {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
 
 .simulador-panel__title {
@@ -30,116 +38,652 @@
   text-align: center;
 }
 
-.simulador-lote {
+/* Datos de solo lectura del lote y de la etapa seleccionados */
+.simulador-datos {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 32px;
   margin: -6px 0 0;
 }
 
-.simulador-lote dt {
+.simulador-datos dt {
   font-size: 0.8rem;
 }
 
-.simulador-lote dd {
+.simulador-datos dd {
   margin: 0;
   color: var(--text-h);
   font-weight: 600;
 }
 
-.simulador-variables {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.simulador-variables p {
+.simulador-estado {
   margin: 0;
-  padding: 14px;
-  border: 1px dashed var(--border-strong);
+  padding: 10px 14px;
+  border: 1px solid #f1dcc0;
   border-radius: 8px;
-  background: var(--bg);
+  color: var(--orange-600);
+  background: var(--orange-50);
   font-size: 0.85rem;
 }
 
-/* Simulaciones guardadas */
-.simulaciones-guardadas__resumen {
-  margin: 0 0 12px;
-  font-size: 0.85rem;
+.simulador-estado--completo {
+  border-color: #cfe6d4;
+  color: var(--green-700);
+  background: var(--green-50);
 }
 
-.simulaciones-guardadas__lista {
+/* Tabla de clima del escenario */
+.clima-escenario {
+  gap: 10px;
+}
+
+.clima-escenario__titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clima-escenario__titulo svg {
+  width: 18px;
+  height: 18px;
+  color: var(--green-700);
+}
+
+.clima-escenario__ayuda {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.clima-escenario__encabezado,
+.clima-dia {
+  display: grid;
+  grid-template-columns: minmax(130px, 1.5fr) repeat(4, minmax(64px, 1fr)) 34px;
+  grid-template-areas: 'fecha temperatura precipitacion humedad viento quitar';
+  gap: 8px;
+}
+
+.clima-escenario__encabezado {
+  color: var(--text-h);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.clima-escenario__encabezado span:first-child {
+  grid-area: fecha;
+}
+
+.clima-escenario__dias {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.simulacion-guardada {
+.clima-dia {
+  align-items: start;
+}
+
+.clima-dia__numero,
+.clima-dia__etiqueta {
+  display: none;
+}
+
+.clima-dia__campo {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.clima-dia__campo--fecha { grid-area: fecha; }
+.clima-dia__campo--temperatura { grid-area: temperatura; }
+.clima-dia__campo--precipitacion { grid-area: precipitacion; }
+.clima-dia__campo--humedad { grid-area: humedad; }
+.clima-dia__campo--viento { grid-area: viento; }
+
+.clima-dia__campo input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-h);
+  background: var(--surface);
+  font: inherit;
+}
+
+.clima-dia__campo input:focus {
+  outline: 2px solid var(--green-700);
+  outline-offset: 1px;
+}
+
+.clima-dia__campo input[aria-invalid='true'] {
+  border-color: var(--red-600);
+}
+
+.clima-dia__quitar {
+  grid-area: quitar;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.clima-dia__quitar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.clima-dia__quitar:hover:not(:disabled) {
+  border-color: var(--border);
+  color: var(--red-600);
+  background: var(--red-50);
+}
+
+.clima-dia__quitar:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.clima-escenario__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1100px) {
+  .simulador {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* En pantallas chicas cada día se muestra como una tarjeta con sus etiquetas. */
+@media (max-width: 640px) {
+  .clima-escenario__encabezado {
+    display: none;
+  }
+
+  .clima-dia {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'numero quitar'
+      'fecha fecha'
+      'temperatura precipitacion'
+      'humedad viento';
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .clima-dia__numero {
+    display: block;
+    grid-area: numero;
+    align-self: center;
+    color: var(--text-h);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .clima-dia__etiqueta {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .clima-dia__quitar {
+    justify-self: end;
+    height: 30px;
+  }
+}
+
+/* Bloqueo del formulario mientras se procesa la simulación */
+.simulador-form__campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.simulador-form__campos:disabled {
+  opacity: 0.6;
+}
+
+/* El spinner necesita contraste sobre el botón verde */
+.simulador-panel__spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+.badge--neutral {
+  color: var(--text-h);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Indicador del proceso largo */
+.procesando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.procesando__spinner {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 4px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green-700);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+.procesando__titulo {
+  color: var(--text-h);
+}
+
+.procesando__detalle {
+  max-width: 340px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.procesando__tiempo {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Resultado de la simulación */
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.resultado__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.resultado__meta {
+  font-size: 0.8rem;
+}
+
+.resultado__indicadores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  padding: 14px 16px;
+  margin: 0;
+}
+
+.resultado__indicadores > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
 }
 
-.simulacion-guardada__encabezado {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 10px;
-  color: var(--text-h);
-  overflow-wrap: anywhere;
-}
-
-.simulacion-guardada__grupo-titulo {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.simulacion-guardada__datos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 32px;
-  margin: 0;
-}
-
-.simulacion-guardada__datos dt {
+.resultado__indicadores dt {
   font-size: 0.8rem;
 }
 
-.simulacion-guardada__datos dd {
+.resultado__indicadores dd {
   margin: 0;
-  color: var(--text-h);
-  font-weight: 600;
 }
 
-.simulacion-guardada__recomendacion {
+.resultado__escenario {
   margin: 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
-  font-size: 0.9rem;
+}
+
+.resultado__escenario small {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.resultado__observaciones {
+  flex-basis: 100%;
+}
+
+.resultado__observaciones dd {
+  font-weight: 400;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 1280px) {
-  .simulador {
-    grid-template-columns: minmax(280px, 1fr) minmax(0, 1fr);
+.resultado__clima {
+  overflow-x: auto;
+}
+
+.resultado__clima table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.resultado__clima caption {
+  margin-bottom: 6px;
+  color: var(--text-h);
+  font-weight: 600;
+  text-align: left;
+}
+
+.resultado__clima th,
+.resultado__clima td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.resultado__clima thead th {
+  color: var(--text-h);
+  font-size: 0.75rem;
+  vertical-align: bottom;
+  white-space: normal;
+}
+
+.resultado__clima th:first-child {
+  text-align: left;
+}
+
+.resultado__clima tbody th {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+/* Recomendación principal: lo único que se muestra de la recomendación */
+.recomendacion__principal {
+  padding: 16px 18px;
+  border: 1px solid #cfe6d4;
+  border-left: 5px solid var(--green-700);
+  border-radius: 10px;
+  background: var(--green-50);
+}
+
+.recomendacion__principal h3 {
+  margin: 0 0 8px;
+  color: var(--green-700);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.recomendacion__principal p {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Simulación guardada sin recomendación */
+.recomendacion-fallida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.recomendacion-fallida__mensaje {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #f1dcc0;
+  border-radius: 10px;
+  color: var(--orange-600);
+  background: var(--orange-50);
+}
+
+.recomendacion-fallida__mensaje svg {
+  flex-shrink: 0;
+}
+
+.recomendacion-fallida__mensaje strong {
+  color: var(--text-h);
+}
+
+.recomendacion-fallida__mensaje p {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .resultado__indicadores {
+    gap: 6px;
   }
 
-  /* La recomendación pasa debajo, ocupando el ancho completo. */
-  .simulador > :last-child {
-    grid-column: 1 / -1;
+  .resultado__indicadores > div {
+    padding: 10px 8px;
+  }
+
+  .resultado__clima th,
+  .resultado__clima td {
+    padding: 6px 4px;
   }
 }
 
+/* Historial de simulaciones guardadas */
+.historial-sim {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.historial-sim__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historial-sim__titulo .simulador-panel__title {
+  margin: 0;
+}
+
+.historial-sim__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.historial-sim__filtro {
+  width: min(100%, 280px);
+}
+
+.historial-sim__resumen {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.historial-sim__encabezado,
+.historial-sim__fila {
+  display: grid;
+  grid-template-columns: 70px minmax(130px, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) 130px 190px;
+  align-items: center;
+  gap: 12px;
+}
+
+.historial-sim__encabezado {
+  padding: 0 14px;
+  color: var(--text-h);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.historial-sim__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial-sim__fila {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.historial-sim__fila:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--bg);
+}
+
+.historial-sim__fila:focus-visible {
+  outline: 2px solid var(--green-700);
+  outline-offset: 1px;
+}
+
+.historial-sim__fila[aria-current='true'] {
+  border-color: var(--green-700);
+  background: var(--green-50);
+  box-shadow: inset 3px 0 0 var(--green-700);
+}
+
+.historial-sim__fila:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.historial-sim__celda {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.historial-sim__celda--numero,
+.historial-sim__celda--lote {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+/* Las etiquetas solo se ven en pantallas chicas; en las anchas las leen los lectores de pantalla. */
+.historial-sim__etiqueta {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.historial-sim__cargando {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.historial-sim__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green-700);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+/* En pantallas medianas y chicas cada simulación se muestra como una tarjeta. */
 @media (max-width: 900px) {
-  .simulador {
-    grid-template-columns: 1fr;
+  .historial-sim__encabezado {
+    display: none;
+  }
+
+  .historial-sim__fila {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'numero estado'
+      'fecha fecha'
+      'lote lote'
+      'etapa etapa'
+      'riesgo riesgo';
+    gap: 6px 12px;
+    padding: 12px 14px;
+  }
+
+  .historial-sim__celda--numero { grid-area: numero; }
+  .historial-sim__celda--fecha { grid-area: fecha; font-size: 0.8rem; }
+  .historial-sim__celda--lote { grid-area: lote; }
+  .historial-sim__celda--etapa { grid-area: etapa; }
+  .historial-sim__celda--riesgo { grid-area: riesgo; }
+  .historial-sim__celda--estado { grid-area: estado; justify-self: end; }
+
+  .historial-sim__celda--lote .historial-sim__etiqueta,
+  .historial-sim__celda--etapa .historial-sim__etiqueta,
+  .historial-sim__celda--riesgo .historial-sim__etiqueta {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    color: var(--text);
+    font-weight: 400;
+  }
+}
+
+/* Overlay que bloquea la aplicación mientras se genera la recomendación */
+.overlay-proceso {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(16, 32, 22, 0.45);
+  backdrop-filter: blur(2px);
+  animation: overlay-aparecer 0.2s ease-out;
+}
+
+.overlay-proceso__tarjeta {
+  width: min(100%, 420px);
+  padding: 8px;
+  outline: none;
+}
+
+.overlay-proceso__tarjeta .procesando {
+  border: 0;
+}
+
+body.sin-scroll {
+  overflow: hidden;
+}
+
+@keyframes overlay-aparecer {
+  from {
+    opacity: 0;
   }
 }

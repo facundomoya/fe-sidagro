@@ -19,6 +19,22 @@ export interface CampaniaApi {
   fechaFin: string | null
 }
 
+/** Etapa fenológica de la soja (GET /agro/etapas-fenologicas), de Emergencia a R8. */
+export interface EtapaFenologicaApi {
+  id: number
+  /** Por ejemplo "R3 - Formación de vainas". */
+  nombre: string
+  descripcion: string
+  /** Texto decimal (°C día). */
+  gddaMinimo: string
+  /** Texto decimal (°C día). */
+  gddaMaximo: string
+  /** Por ejemplo "Cada 3 días". */
+  frecuenciaMonitoreo: string
+  /** Riesgo base de chinche verde en la etapa ("Muy bajo" a "Muy alto"). */
+  riesgoChinche: string
+}
+
 export type EstadoLote = 'ACTIVO' | 'INACTIVO'
 
 export interface LoteApi {
