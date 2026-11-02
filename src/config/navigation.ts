@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
-import { IconBug, IconDollar, IconMap, IconSprout } from '../components/icons/Icons'
-import { PERMISOS } from '../auth/permisos'
+import { IconBug, IconDollar, IconMap, IconSprout, IconUsers } from '../components/icons/Icons'
+import { PERMISOS, cumpleRequisito, type ConsultaPermiso, type RequisitoAcceso } from '../auth/permisos'
 
 export const RUTAS = {
   login: '/login',
@@ -8,6 +8,7 @@ export const RUTAS = {
   simulador: '/simulador-escenarios',
   monitoreo: '/monitoreo-chinche-verde',
   lotesCampanias: '/lotes-y-campanias',
+  administracion: '/administracion-usuarios',
 } as const
 
 /** Estado de navegación para abrir «Lotes y campañas» en el formulario de datos productivos. */
@@ -19,35 +20,92 @@ export interface NavItem {
   path: string
   label: string
   icon: ComponentType
-  /** Si se indica, la opción solo se muestra a usuarios con ese permiso. */
-  permiso?: string
+  /** Permisos necesarios para ver la opción y entrar a su ruta. */
+  acceso: RequisitoAcceso
 }
+
+const SIMULACION = [
+  PERMISOS.crearSimulacion,
+  PERMISOS.listarSimulaciones,
+  PERMISOS.consultarSimulacion,
+]
+
+/**
+ * Permisos de cada sección, iguales para el menú y para la ruta. Son los que exigen los
+ * endpoints del backend que la sección consulta al abrirse.
+ */
+export const ACCESO = {
+  // Basta con poder consultar usuarios o roles; cada pestaña exige el suyo.
+  administracion: { alguno: [PERMISOS.listarUsuarios, PERMISOS.listarRoles] },
+  lotesCampanias: { todos: [PERMISOS.consultarCatalogo] },
+  monitoreo: { todos: [PERMISOS.consultarCatalogo, PERMISOS.consultarMonitoreo] },
+  // Los lotes y etapas son obligatorios; de la simulación alcanza con cualquiera de sus permisos.
+  simulador: { todos: [PERMISOS.consultarCatalogo], alguno: SIMULACION },
+  dashboard: { todos: [PERMISOS.consultarEconomico] },
+} satisfies Record<string, RequisitoAcceso>
 
 // Orden del menú lateral, de arriba hacia abajo.
 export const NAV_ITEMS: NavItem[] = [
   {
+    path: RUTAS.administracion,
+    label: 'Administración de usuarios',
+    icon: IconUsers,
+    acceso: ACCESO.administracion,
+  },
+  {
     path: RUTAS.lotesCampanias,
     label: 'Lotes y campañas',
     icon: IconMap,
-    permiso: PERMISOS.consultarCatalogo,
+    acceso: ACCESO.lotesCampanias,
   },
-  { path: RUTAS.monitoreo, label: 'Monitoreo de chinche verde', icon: IconBug },
-  { path: RUTAS.simulador, label: 'Simulador de escenarios', icon: IconSprout },
+  {
+    path: RUTAS.monitoreo,
+    label: 'Monitoreo de chinche verde',
+    icon: IconBug,
+    acceso: ACCESO.monitoreo,
+  },
+  {
+    path: RUTAS.simulador,
+    label: 'Simulador de escenarios',
+    icon: IconSprout,
+    acceso: ACCESO.simulador,
+  },
   {
     path: RUTAS.dashboard,
     label: 'Dashboard económico',
     icon: IconDollar,
-    permiso: PERMISOS.consultarEconomico,
+    acceso: ACCESO.dashboard,
   },
 ]
 
+/** Opciones del menú a las que el usuario puede entrar, en el orden del menú. */
+export function seccionesDisponibles(tienePermiso: ConsultaPermiso): NavItem[] {
+  return NAV_ITEMS.filter((item) => cumpleRequisito(tienePermiso, item.acceso))
+}
+
+/** Si el usuario puede entrar a la ruta. Las rutas que no son secciones no se restringen aquí. */
+export function puedeAcceder(path: string, tienePermiso: ConsultaPermiso): boolean {
+  const item = NAV_ITEMS.find((i) => i.path === path)
+  return !item || cumpleRequisito(tienePermiso, item.acceso)
+}
+
 /**
- * Pantalla a la que se llega después del login o con una dirección desconocida: el Dashboard
- * económico si el usuario puede consultarlo, si no la primera opción del menú que tenga habilitada.
+ * Prioridad para elegir la pantalla inicial. Es distinta del orden del menú: la Administración
+ * figura primera en el menú, pero solo es la pantalla inicial si no hay otra sección habilitada.
  */
-export function rutaInicial(tienePermiso: (permiso: string) => boolean): string {
-  const disponible = (item: NavItem) => !item.permiso || tienePermiso(item.permiso)
-  const dashboard = NAV_ITEMS.find((item) => item.path === RUTAS.dashboard)
-  if (dashboard && disponible(dashboard)) return dashboard.path
-  return NAV_ITEMS.find(disponible)?.path ?? RUTAS.monitoreo
+const PRIORIDAD_INICIAL: string[] = [
+  RUTAS.dashboard,
+  RUTAS.lotesCampanias,
+  RUTAS.monitoreo,
+  RUTAS.simulador,
+  RUTAS.administracion,
+]
+
+/**
+ * Pantalla a la que se llega después del login o con una dirección desconocida: la primera
+ * sección habilitada según PRIORIDAD_INICIAL. null si no tiene acceso a ninguna sección.
+ */
+export function rutaInicial(tienePermiso: ConsultaPermiso): string | null {
+  const disponibles = new Set(seccionesDisponibles(tienePermiso).map((item) => item.path))
+  return PRIORIDAD_INICIAL.find((path) => disponibles.has(path)) ?? null
 }

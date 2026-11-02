@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
-import { NAV_ITEMS } from '../../config/navigation'
+import { seccionesDisponibles } from '../../config/navigation'
 import { IconClose, IconLeaf } from '../icons/Icons'
 
 interface SidebarProps {
@@ -12,7 +12,7 @@ interface SidebarProps {
 
 function Sidebar({ open, oculto, onClose }: SidebarProps) {
   const { tienePermiso } = useAuth()
-  const items = NAV_ITEMS.filter((item) => !item.permiso || tienePermiso(item.permiso))
+  const items = seccionesDisponibles(tienePermiso)
 
   return (
     <aside id="menu-lateral" className={`sidebar${open ? ' sidebar--open' : ''}`} inert={oculto}>

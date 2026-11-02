@@ -53,6 +53,11 @@ interface Opciones {
   provincias: ProvinciaApi[]
 }
 
+const SIN_PERMISO_FILTROS: ErrorCarga = {
+  mensaje: 'tu usuario no tiene permiso para consultar las campañas y provincias.',
+  reintentable: false,
+}
+
 function aParametros(filtros: ValoresFiltros): FiltrosDashboardEconomico {
   // «Todas» no se envía.
   return {
@@ -78,6 +83,8 @@ function DashboardEconomicoPage() {
 function DashboardEconomico() {
   const { tienePermiso } = useAuth()
   const puedeRegistrarCosto = tienePermiso(PERMISOS.registrarCosto)
+  // Las opciones de los filtros (campañas y provincias) exigen AGRO_PARAM_GET.
+  const puedeFiltrar = tienePermiso(PERMISOS.consultarCatalogo)
   // Completar datos productivos se hace en «Lotes y campañas»: requiere ver el catálogo y LOTE_PUT.
   const puedeCompletarDatos =
     tienePermiso(PERMISOS.modificarLote) && tienePermiso(PERMISOS.consultarCatalogo)
@@ -108,6 +115,7 @@ function DashboardEconomico() {
   }, [consulta])
 
   useEffect(() => {
+    if (!puedeFiltrar) return
     const controller = new AbortController()
     Promise.all([obtenerCampanias(controller.signal), obtenerProvincias(controller.signal)])
       .then(([campanias, provincias]) => {
@@ -122,7 +130,7 @@ function DashboardEconomico() {
         setErrorOpciones(errorDeCarga(error, 'las campañas y provincias'))
       })
     return () => controller.abort()
-  }, [intentoOpciones])
+  }, [intentoOpciones, puedeFiltrar])
 
   const cargando = resultado?.consulta !== consulta
   // Al actualizar o reintentar con los mismos filtros se mantienen los datos, atenuados. Con
@@ -207,7 +215,7 @@ function DashboardEconomico() {
           valores={consulta.filtros}
           campanias={opciones?.campanias ?? null}
           provincias={opciones?.provincias ?? null}
-          errorOpciones={errorOpciones}
+          errorOpciones={puedeFiltrar ? errorOpciones : SIN_PERMISO_FILTROS}
           onChange={cambiarFiltros}
           onReintentarOpciones={() => {
             setErrorOpciones(null)

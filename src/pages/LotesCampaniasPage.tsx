@@ -369,29 +369,34 @@ function LotesCampaniasPage() {
 
       {datos && (
         <>
-          <Modal
-            open={modal?.tipo === 'campania'}
-            title="Nueva campaña"
-            onClose={cerrarModal}
-            bloqueado={guardando}
-          >
-            <CampaniaForm
-              onCancel={cerrarModal}
-              onSaved={handleCampaniaCreada}
-              onGuardandoChange={setGuardando}
-            />
-          </Modal>
+          {/* Cada formulario se monta solo con su permiso, aunque se cambie el estado del modal. */}
+          {puedeCrearCampania && (
+            <Modal
+              open={modal?.tipo === 'campania'}
+              title="Nueva campaña"
+              onClose={cerrarModal}
+              bloqueado={guardando}
+            >
+              <CampaniaForm
+                onCancel={cerrarModal}
+                onSaved={handleCampaniaCreada}
+                onGuardandoChange={setGuardando}
+              />
+            </Modal>
+          )}
 
-          <Modal open={modal?.tipo === 'lote'} title="Nuevo lote" onClose={cerrarModal} bloqueado={guardando}>
-            <LoteForm
-              campanias={datos.campanias}
-              provincias={datos.provincias}
-              campaniaInicial={campaniaFiltro === TODAS ? null : Number(campaniaFiltro)}
-              onCancel={cerrarModal}
-              onSaved={handleLoteCreado}
-              onGuardandoChange={setGuardando}
-            />
-          </Modal>
+          {puedeCrearLote && (
+            <Modal open={modal?.tipo === 'lote'} title="Nuevo lote" onClose={cerrarModal} bloqueado={guardando}>
+              <LoteForm
+                campanias={datos.campanias}
+                provincias={datos.provincias}
+                campaniaInicial={campaniaFiltro === TODAS ? null : Number(campaniaFiltro)}
+                onCancel={cerrarModal}
+                onSaved={handleLoteCreado}
+                onGuardandoChange={setGuardando}
+              />
+            </Modal>
+          )}
 
           <Modal
             open={modal?.tipo === 'siembra'}
@@ -399,7 +404,7 @@ function LotesCampaniasPage() {
             onClose={cerrarModal}
             bloqueado={guardando}
           >
-            {modal?.tipo === 'siembra' && (
+            {modal?.tipo === 'siembra' && puedeCompletarSiembra && (
               <FechaSiembraForm
                 key={modal.lote.id}
                 lote={modal.lote}
@@ -418,7 +423,7 @@ function LotesCampaniasPage() {
             onClose={cerrarModal}
             bloqueado={guardando}
           >
-            {modal?.tipo === 'datos' && (
+            {modal?.tipo === 'datos' && puedeCompletarDatos && (
               <DatosProductivosForm
                 key={modal.lote.id}
                 // Se usa la versión del listado, que se actualiza si otro usuario cargó datos.
@@ -437,7 +442,7 @@ function LotesCampaniasPage() {
             onClose={cerrarModal}
             bloqueado={guardando}
           >
-            {modal?.tipo === 'departamento' && (
+            {modal?.tipo === 'departamento' && puedeCompletarDepartamento && (
               <DepartamentoForm
                 key={modal.lote.id}
                 // Se usa la versión del listado, que se actualiza si otro usuario asignó el departamento.

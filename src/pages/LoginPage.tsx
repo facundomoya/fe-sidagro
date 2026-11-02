@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import StatusMessage from '../components/StatusMessage'
 import { IconLeaf } from '../components/icons/Icons'
 import { useAuth } from '../auth/useAuth'
-import { rutaInicial } from '../config/navigation'
+import { puedeAcceder, rutaInicial } from '../config/navigation'
 import { ApiError } from '../services/apiClient'
 import '../components/auth/Login.css'
 
@@ -25,7 +25,11 @@ function mensajeDeError(error: unknown): string {
 function LoginPage() {
   const { usuario, motivoCierre, iniciarSesion, tienePermiso } = useAuth()
   const location = useLocation()
-  const destino = (location.state as { desde?: string } | null)?.desde ?? rutaInicial(tienePermiso)
+  // Se vuelve a la página pedida antes del login solo si el usuario puede usarla. Sin ninguna
+  // sección habilitada, la raíz muestra el aviso correspondiente.
+  const desde = (location.state as { desde?: string } | null)?.desde
+  const destino =
+    desde && puedeAcceder(desde, tienePermiso) ? desde : (rutaInicial(tienePermiso) ?? '/')
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')

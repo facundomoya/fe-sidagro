@@ -21,6 +21,8 @@ import {
   IconSprout,
   IconTrend,
 } from '../components/icons/Icons'
+import { useAuth } from '../auth/useAuth'
+import { PERMISOS } from '../auth/permisos'
 import { obtenerLotes } from '../services/catalogoService'
 import { obtenerMonitoreo } from '../services/monitoreoService'
 import type { LoteApi } from '../types/catalogo'
@@ -59,6 +61,9 @@ function loteInicial(lotes: LoteApi[], hoy: string): LoteApi | undefined {
 
 function MonitoreoChinchePage() {
   const hoy = fechaHoyIso()
+  // La consulta (indicadores, clima e historial) la habilita la ruta; registrar exige MONITOREO_POST.
+  const { tienePermiso } = useAuth()
+  const puedeRegistrar = tienePermiso(PERMISOS.registrarObservacion)
 
   const [lotes, setLotes] = useState<LoteApi[]>([])
   const [cargandoLotes, setCargandoLotes] = useState(true)
@@ -190,15 +195,17 @@ function MonitoreoChinchePage() {
         <IconHistory />
         Ver historial de observaciones
       </button>
-      <button
-        type="button"
-        className="btn btn--primary"
-        disabled={!lote}
-        onClick={() => setModalActivo('observacion')}
-      >
-        <IconClipboard />
-        Registrar observación
-      </button>
+      {puedeRegistrar && (
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={!lote}
+          onClick={() => setModalActivo('observacion')}
+        >
+          <IconClipboard />
+          Registrar observación
+        </button>
+      )}
     </>
   )
 
@@ -218,20 +225,22 @@ function MonitoreoChinchePage() {
 
       {lote && (
         <>
-          <Modal
-            open={modalActivo === 'observacion'}
-            title="Registrar observación de campo"
-            onClose={() => setModalActivo(null)}
-            bloqueado={guardandoObservacion}
-          >
-            <ObservacionForm
-              key={lote.id}
-              lote={lote}
-              onCancel={() => setModalActivo(null)}
-              onSaved={handleObservacionGuardada}
-              onGuardandoChange={setGuardandoObservacion}
-            />
-          </Modal>
+          {puedeRegistrar && (
+            <Modal
+              open={modalActivo === 'observacion'}
+              title="Registrar observación de campo"
+              onClose={() => setModalActivo(null)}
+              bloqueado={guardandoObservacion}
+            >
+              <ObservacionForm
+                key={lote.id}
+                lote={lote}
+                onCancel={() => setModalActivo(null)}
+                onSaved={handleObservacionGuardada}
+                onGuardandoChange={setGuardandoObservacion}
+              />
+            </Modal>
+          )}
 
           <Modal
             open={modalActivo === 'historial'}

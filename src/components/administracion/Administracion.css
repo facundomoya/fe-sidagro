@@ -1,0 +1,160 @@
+/* Administración de usuarios. Reutiliza las pestañas, listas y formularios de Gestion.css. */
+
+.btn--danger {
+  color: #fff;
+  background: var(--red-600);
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #a82020;
+}
+
+.btn--danger-outline {
+  border-color: var(--red-600);
+  color: var(--red-600);
+  background: var(--surface);
+}
+
+.btn--danger-outline:hover {
+  background: var(--red-50);
+}
+
+.admin-barra__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-nota {
+  margin: 0 0 12px;
+}
+
+.admin-nota--item {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.admin-insignias {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.admin-insignias .badge:not([class*='badge--']) {
+  color: var(--green-700);
+  background: var(--green-50);
+}
+
+.admin-dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.admin-rol__descripcion {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.admin-confirmar__texto {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
+
+.admin-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+/* Permisos agrupados por funcionalidad */
+.admin-permisos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+}
+
+.admin-permisos__grupo {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.admin-permisos__grupo legend,
+.admin-permisos__grupo h3 {
+  padding: 0 4px;
+  margin: 0 0 6px;
+  color: var(--text-h);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-permisos__grupo ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-permiso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+label.admin-permiso {
+  cursor: pointer;
+}
+
+.admin-permiso input {
+  margin-top: 3px;
+}
+
+.admin-permiso > span:first-of-type {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-permiso strong {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.admin-permiso small {
+  font-size: 0.78rem;
+}
+
+.admin-permiso--lectura {
+  padding: 4px 0;
+}
+
+.admin-permiso--cambio {
+  background: var(--orange-50);
+}
+
+.admin-permiso__marca {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--orange-600);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .admin-barra__acciones,
+  .admin-barra__acciones .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

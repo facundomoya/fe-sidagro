@@ -10,6 +10,8 @@ interface RecomendacionPanelProps {
   reintentando: boolean
   /** Error del último reintento. */
   errorReintento: string | null
+  /** Permiso SIMULACION_POST, que exige el reintento. */
+  puedeReintentar: boolean
   onReintentar: () => void
 }
 
@@ -18,6 +20,7 @@ function RecomendacionPanel({
   creando,
   reintentando,
   errorReintento,
+  puedeReintentar,
   onReintentar,
 }: RecomendacionPanelProps) {
   let contenido
@@ -41,16 +44,20 @@ function RecomendacionPanel({
           <div>
             <strong>No se pudo generar la recomendación</strong>
             <p>
-              El escenario quedó guardado como simulación N.º {simulacion.id}. Podés volver a
-              solicitar la recomendación sin cargar los datos de nuevo.
+              El escenario quedó guardado como simulación N.º {simulacion.id}.
+              {puedeReintentar
+                ? ' Podés volver a solicitar la recomendación sin cargar los datos de nuevo.'
+                : ' Tu usuario no tiene permiso para volver a solicitarla.'}
             </p>
           </div>
         </div>
         {errorReintento && <StatusMessage type="error" message={errorReintento} />}
-        <button type="button" className="btn btn--primary" onClick={onReintentar}>
-          <IconRefresh />
-          Reintentar recomendación
-        </button>
+        {puedeReintentar && (
+          <button type="button" className="btn btn--primary" onClick={onReintentar}>
+            <IconRefresh />
+            Reintentar recomendación
+          </button>
+        )}
       </div>
     )
   } else {

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import StatusMessage from '../components/StatusMessage'
+import EmptyState from '../components/EmptyState'
+import { IconSprout } from '../components/icons/Icons'
 import ErrorConReintento from '../components/monitoreo/ErrorConReintento'
 import { describirError, type ErrorCarga } from '../components/monitoreo/errores'
 import ConfiguracionEscenarioPanel from '../components/simulador/ConfiguracionEscenarioPanel'
@@ -10,6 +12,8 @@ import ResultadosSimulacionPanel from '../components/simulador/ResultadosSimulac
 import RecomendacionPanel from '../components/simulador/RecomendacionPanel'
 import { mensajeErrorSimulacion } from '../components/simulador/errores'
 import { actualizarHistorial, ordenarHistorial } from '../components/simulador/historial'
+import { useAuth } from '../auth/useAuth'
+import { PERMISOS } from '../auth/permisos'
 import { ApiError } from '../services/apiClient'
 import { obtenerEtapas, obtenerLotes } from '../services/catalogoService'
 import {
@@ -43,6 +47,12 @@ type Proceso = 'crear' | 'reintentar'
 const LIMITE_RECOMENDACION_MS = 5 * 60 * 1000
 
 function SimuladorEscenariosPage() {
+  // La ruta exige AGRO_PARAM_GET y algún permiso de simulación; cada función pide el suyo.
+  const { tienePermiso } = useAuth()
+  const puedeSimular = tienePermiso(PERMISOS.crearSimulacion)
+  const puedeListar = tienePermiso(PERMISOS.listarSimulaciones)
+  const puedeVerDetalle = tienePermiso(PERMISOS.consultarSimulacion)
+
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null)
   const [error, setError] = useState<ErrorCarga | null>(null)
   const [intento, setIntento] = useState(0)
@@ -87,7 +97,9 @@ function SimuladorEscenariosPage() {
     setConsultandoId(null)
   }
 
+  // Los lotes y las etapas solo los usa el formulario de simulación.
   useEffect(() => {
+    if (!puedeSimular) return
     const controller = new AbortController()
     Promise.all([obtenerLotes(controller.signal), obtenerEtapas(controller.signal)])
       .then(([lotes, etapas]) =>
@@ -99,7 +111,7 @@ function SimuladorEscenariosPage() {
         }
       })
     return () => controller.abort()
-  }, [intento])
+  }, [intento, puedeSimular])
 
   function reintentarCarga() {
     setError(null)
@@ -107,6 +119,7 @@ function SimuladorEscenariosPage() {
   }
 
   useEffect(() => {
+    if (!puedeListar) return
     const controller = new AbortController()
     obtenerSimulaciones(controller.signal)
       .then((simulaciones) => setHistorial(ordenarHistorial(simulaciones)))
@@ -116,7 +129,7 @@ function SimuladorEscenariosPage() {
         }
       })
     return () => controller.abort()
-  }, [intentoHistorial])
+  }, [intentoHistorial, puedeListar])
 
   // Al salir de la página se cancela la consulta de detalle pendiente.
   useEffect(() => () => consultaRef.current?.abort(), [])
@@ -128,7 +141,7 @@ function SimuladorEscenariosPage() {
   }
 
   async function seleccionarSimulacion(id: number) {
-    if (procesandoRef.current || id === consultandoId) return
+    if (!puedeVerDetalle || procesandoRef.current || id === consultandoId) return
     // Ya se está mostrando: no hace falta volver a pedirla.
     if (id === simulacion?.id && consultandoId === null) {
       setErrorConsulta(null)
@@ -145,7 +158,8 @@ function SimuladorEscenariosPage() {
       setSimulacion(detalle)
       setErrorReintento(null)
       registrarEnHistorial(detalle)
-      mostrarResultados()
+      // Después de pintar: sin el formulario, el panel de resultados aparece recién ahora.
+      requestAnimationFrame(mostrarResultados)
     } catch (err) {
       if (!controller.signal.aborted) setErrorConsulta(mensajeErrorSimulacion(err, 'consultar'))
     } finally {
@@ -158,7 +172,7 @@ function SimuladorEscenariosPage() {
 
   // Los pedidos no se cancelan al salir de la página: el backend guarda el escenario igual.
   async function simular(nueva: NuevaSimulacionApi) {
-    if (procesandoRef.current) return
+    if (!puedeSimular || procesandoRef.current) return
     // Último control antes del POST: el clima no puede ser anterior a la siembra del lote.
     const lote = catalogo?.lotes.find((l) => l.id === nueva.loteId)
     const errorSiembra = errorDeSiembra(nueva, lote?.fechaSiembra)
@@ -187,7 +201,7 @@ function SimuladorEscenariosPage() {
   }
 
   async function reintentarRecomendacionActual() {
-    if (!simulacion || procesandoRef.current) return
+    if (!puedeSimular || !simulacion || procesandoRef.current) return
     const { id } = simulacion
     procesandoRef.current = true
     cancelarConsulta()
@@ -201,7 +215,11 @@ function SimuladorEscenariosPage() {
       setSimulacion(actualizada)
       registrarEnHistorial(actualizada)
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
+      if (err instanceof ApiError && err.status === 409 && !puedeVerDetalle) {
+        setErrorReintento(
+          'La simulación ya tiene una recomendación guardada, pero tu usuario no tiene permiso para consultar su detalle.',
+        )
+      } else if (err instanceof ApiError && err.status === 409) {
         // La simulación ya tenía recomendación (por ejemplo, desde otra pestaña): se muestra.
         try {
           const detalle = await obtenerSimulacion(id)
@@ -219,14 +237,84 @@ function SimuladorEscenariosPage() {
     }
   }
 
-  const cargando = !catalogo && !error
+  const cargando = puedeSimular && !catalogo && !error
+
+  const panelesResultado = (
+    <div
+      className={`simulador__resultados${puedeSimular ? '' : ' simulador__resultados--consulta'}`}
+      ref={resultadosRef}
+    >
+      <ResultadosSimulacionPanel simulacion={simulacion} creando={proceso === 'crear'} />
+      <RecomendacionPanel
+        simulacion={simulacion}
+        creando={proceso === 'crear'}
+        reintentando={proceso === 'reintentar'}
+        errorReintento={errorReintento}
+        puedeReintentar={puedeSimular}
+        onReintentar={reintentarRecomendacionActual}
+      />
+    </div>
+  )
+
+  const historialPanel = puedeListar ? (
+    <HistorialSimulaciones
+      simulaciones={historial}
+      error={errorHistorial}
+      seleccionadaId={simulacion?.id ?? null}
+      consultandoId={consultandoId}
+      errorConsulta={errorConsulta}
+      bloqueado={proceso !== null}
+      puedeAbrir={puedeVerDetalle}
+      puedeEjecutar={puedeSimular}
+      onSeleccionar={seleccionarSimulacion}
+      onRecargar={recargarHistorial}
+    />
+  ) : (
+    <div className="simulador__aviso-permiso">
+      <StatusMessage
+        type="empty"
+        message="Tu usuario no tiene permiso para consultar el historial de simulaciones guardadas."
+      />
+    </div>
+  )
+
+  const header = (
+    <PageHeader
+      title="Simulador de escenarios"
+      description="Planteá un escenario para un lote (etapa, riesgo observado y clima esperado) y obtené una recomendación agronómica."
+    />
+  )
+
+  // Sin SIMULACION_POST no se muestra el formulario: solo la consulta que permitan los permisos.
+  if (!puedeSimular) {
+    return (
+      <>
+        {header}
+        {puedeListar ? (
+          <StatusMessage
+            type="empty"
+            message={
+              puedeVerDetalle
+                ? 'Tu usuario puede consultar las simulaciones guardadas y su detalle, pero no tiene permiso para ejecutar simulaciones nuevas.'
+                : 'Tu usuario puede consultar el listado de simulaciones guardadas, pero no tiene permiso para ejecutar simulaciones nuevas.'
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={IconSprout}
+            title="No hay acciones disponibles en esta sección"
+            description="Tu usuario puede consultar el detalle de una simulación, pero no listarlas ni ejecutarlas, por lo que no hay una forma de elegir cuál ver. Si necesitás usar el Simulador, pedí que te asignen los permisos correspondientes."
+          />
+        )}
+        {simulacion && panelesResultado}
+        {puedeListar && historialPanel}
+      </>
+    )
+  }
 
   return (
     <>
-      <PageHeader
-        title="Simulador de escenarios"
-        description="Planteá un escenario para un lote (etapa, riesgo observado y clima esperado) y obtené una recomendación agronómica."
-      />
+      {header}
 
       {proceso !== null && <OverlayProcesando titulo="Generando recomendación..." />}
 
@@ -256,27 +344,9 @@ function SimuladorEscenariosPage() {
               error={errorCrear}
               onSimular={simular}
             />
-            <div className="simulador__resultados" ref={resultadosRef}>
-              <ResultadosSimulacionPanel simulacion={simulacion} creando={proceso === 'crear'} />
-              <RecomendacionPanel
-                simulacion={simulacion}
-                creando={proceso === 'crear'}
-                reintentando={proceso === 'reintentar'}
-                errorReintento={errorReintento}
-                onReintentar={reintentarRecomendacionActual}
-              />
-            </div>
+            {panelesResultado}
           </div>
-          <HistorialSimulaciones
-            simulaciones={historial}
-            error={errorHistorial}
-            seleccionadaId={simulacion?.id ?? null}
-            consultandoId={consultandoId}
-            errorConsulta={errorConsulta}
-            bloqueado={proceso !== null}
-            onSeleccionar={seleccionarSimulacion}
-            onRecargar={recargarHistorial}
-          />
+          {historialPanel}
         </>
       )}
     </>

@@ -13,6 +13,12 @@
   min-width: 0;
 }
 
+/* Usuarios que solo consultan: los resultados van debajo del aviso, sin el formulario */
+.simulador__resultados--consulta,
+.simulador__aviso-permiso {
+  margin-top: 20px;
+}
+
 .simulador-panel__title {
   display: flex;
   align-items: center;
@@ -578,6 +584,19 @@
 .historial-sim__fila:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Sin permiso para abrir el detalle: la fila solo se muestra */
+.historial-sim__fila--lectura,
+.historial-sim__fila--lectura:hover {
+  border-color: var(--border);
+  background: var(--surface);
+  cursor: default;
+}
+
+.historial-sim__nota {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
 }
 
 .historial-sim__celda {

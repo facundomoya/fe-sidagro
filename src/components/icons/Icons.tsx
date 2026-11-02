@@ -240,3 +240,13 @@ export function IconPlus() {
     </SvgIcon>
   )
 }
+
+export function IconUsers() {
+  return (
+    <SvgIcon>
+      <path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20" />
+      <circle cx="10" cy="8" r="3.5" />
+      <path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.4M15.5 4.6a3.5 3.5 0 0 1 0 6.8" />
+    </SvgIcon>
+  )
+}

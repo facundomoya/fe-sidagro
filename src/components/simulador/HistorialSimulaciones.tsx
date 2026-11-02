@@ -20,6 +20,10 @@ interface HistorialSimulacionesProps {
   errorConsulta: string | null
   /** Hay una simulación o un reintento en curso: no se puede cambiar la selección. */
   bloqueado: boolean
+  /** Permiso SIMULACION_GET_ONE: sin él, las filas solo se muestran. */
+  puedeAbrir: boolean
+  /** Permiso SIMULACION_POST, para el texto del historial vacío. */
+  puedeEjecutar: boolean
   onSeleccionar: (id: number) => void
   onRecargar: () => void
 }
@@ -33,6 +37,8 @@ function HistorialSimulaciones({
   consultandoId,
   errorConsulta,
   bloqueado,
+  puedeAbrir,
+  puedeEjecutar,
   onSeleccionar,
   onRecargar,
 }: HistorialSimulacionesProps) {
@@ -47,7 +53,11 @@ function HistorialSimulaciones({
     contenido = (
       <StatusMessage
         type="empty"
-        message="Todavía no hay simulaciones guardadas. Las que ejecutes aparecerán aquí."
+        message={
+          puedeEjecutar
+            ? 'Todavía no hay simulaciones guardadas. Las que ejecutes aparecerán aquí.'
+            : 'Todavía no hay simulaciones guardadas.'
+        }
       />
     )
   } else {
@@ -77,6 +87,12 @@ function HistorialSimulaciones({
         </div>
 
         {errorConsulta && <StatusMessage type="error" message={errorConsulta} />}
+        {!puedeAbrir && (
+          <p className="historial-sim__nota">
+            Tu usuario puede ver el listado, pero no tiene permiso para abrir el detalle de cada
+            simulación.
+          </p>
+        )}
 
         {visibles.length === 0 ? (
           <StatusMessage type="empty" message="No hay simulaciones guardadas para este lote." />
@@ -98,6 +114,7 @@ function HistorialSimulaciones({
                   seleccionada={simulacion.id === seleccionadaId}
                   consultando={simulacion.id === consultandoId}
                   bloqueado={bloqueado}
+                  puedeAbrir={puedeAbrir}
                   onSeleccionar={onSeleccionar}
                 />
               ))}
@@ -132,6 +149,7 @@ interface FilaSimulacionProps {
   seleccionada: boolean
   consultando: boolean
   bloqueado: boolean
+  puedeAbrir: boolean
   onSeleccionar: (id: number) => void
 }
 
@@ -140,9 +158,56 @@ function FilaSimulacion({
   seleccionada,
   consultando,
   bloqueado,
+  puedeAbrir,
   onSeleccionar,
 }: FilaSimulacionProps) {
   const estado = ESTADO_SIMULACION[simulacion.estado] ?? { texto: simulacion.estado, tono: 'default' }
+
+  const celdas = (
+    <>
+      <span className="historial-sim__celda historial-sim__celda--numero">
+        <span className="historial-sim__etiqueta">Simulación </span>N.º {simulacion.id}
+      </span>
+      <span className="historial-sim__celda historial-sim__celda--fecha">
+        <span className="historial-sim__etiqueta">Fecha: </span>
+        {formatearFechaHora(simulacion.createdAt)}
+      </span>
+      <span className="historial-sim__celda historial-sim__celda--lote">
+        <span className="historial-sim__etiqueta">Lote: </span>
+        {simulacion.lote.nombre}
+      </span>
+      <span className="historial-sim__celda historial-sim__celda--etapa">
+        <span className="historial-sim__etiqueta">Etapa: </span>
+        {simulacion.etapa.nombre}
+      </span>
+      <span className="historial-sim__celda historial-sim__celda--riesgo">
+        <span className="historial-sim__etiqueta">Riesgo observado: </span>
+        <span className={claseBadge(tonoRiesgo(simulacion.riesgoPlaga))}>
+          {simulacion.riesgoPlaga}
+        </span>
+      </span>
+      <span className="historial-sim__celda historial-sim__celda--estado">
+        <span className="historial-sim__etiqueta">Estado: </span>
+        {consultando ? (
+          <span className="historial-sim__cargando">
+            <span className="historial-sim__spinner" aria-hidden="true" />
+            Cargando...
+          </span>
+        ) : (
+          <span className={claseBadge(estado.tono)}>{estado.texto}</span>
+        )}
+      </span>
+    </>
+  )
+
+  // Sin permiso para consultar el detalle, la fila no es un botón.
+  if (!puedeAbrir) {
+    return (
+      <li>
+        <div className="historial-sim__fila historial-sim__fila--lectura">{celdas}</div>
+      </li>
+    )
+  }
 
   return (
     <li>
@@ -154,38 +219,7 @@ function FilaSimulacion({
         disabled={bloqueado}
         onClick={() => onSeleccionar(simulacion.id)}
       >
-        <span className="historial-sim__celda historial-sim__celda--numero">
-          <span className="historial-sim__etiqueta">Simulación </span>N.º {simulacion.id}
-        </span>
-        <span className="historial-sim__celda historial-sim__celda--fecha">
-          <span className="historial-sim__etiqueta">Fecha: </span>
-          {formatearFechaHora(simulacion.createdAt)}
-        </span>
-        <span className="historial-sim__celda historial-sim__celda--lote">
-          <span className="historial-sim__etiqueta">Lote: </span>
-          {simulacion.lote.nombre}
-        </span>
-        <span className="historial-sim__celda historial-sim__celda--etapa">
-          <span className="historial-sim__etiqueta">Etapa: </span>
-          {simulacion.etapa.nombre}
-        </span>
-        <span className="historial-sim__celda historial-sim__celda--riesgo">
-          <span className="historial-sim__etiqueta">Riesgo observado: </span>
-          <span className={claseBadge(tonoRiesgo(simulacion.riesgoPlaga))}>
-            {simulacion.riesgoPlaga}
-          </span>
-        </span>
-        <span className="historial-sim__celda historial-sim__celda--estado">
-          <span className="historial-sim__etiqueta">Estado: </span>
-          {consultando ? (
-            <span className="historial-sim__cargando">
-              <span className="historial-sim__spinner" aria-hidden="true" />
-              Cargando...
-            </span>
-          ) : (
-            <span className={claseBadge(estado.tono)}>{estado.texto}</span>
-          )}
-        </span>
+        {celdas}
       </button>
     </li>
   )
