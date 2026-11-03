@@ -372,20 +372,6 @@
   }
 }
 
-/* Próximamente */
-.economico-proximamente {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px;
-}
-
-.economico-proximamente ul {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 0.9rem;
-}
-
 /* Confirmación de un registro y error del dashboard */
 .economico-confirmacion {
   margin-bottom: 20px;

@@ -12,7 +12,6 @@ import ReferenciasMercado from '../components/economico/ReferenciasMercado'
 import ResultadosGenerales from '../components/economico/ResultadosGenerales'
 import ListaLotesEconomicos from '../components/economico/ListaLotesEconomicos'
 import DetalleLoteEconomico from '../components/economico/DetalleLoteEconomico'
-import Proximamente from '../components/economico/Proximamente'
 import CostosProduccion from '../components/economico/CostosProduccion'
 import CostoForm from '../components/economico/CostoForm'
 import { textoFecha, textoUsd } from '../components/economico/formato'
@@ -230,8 +229,6 @@ function DashboardEconomico() {
           puedeRegistrar={puedeRegistrarCosto}
           onRegistrar={() => setRegistrandoCosto(true)}
         />
-
-        <Proximamente />
       </div>
 
       <Modal

@@ -23,7 +23,9 @@ function MainLayout() {
   // En pantallas chicas el menú se despliega sobre el contenido; en escritorio se oculta
   // por completo y el contenido ocupa el ancho liberado. Las animaciones están en Layout.css.
   const [abiertoEnMovil, setAbiertoEnMovil] = useState(false)
-  const [ocultoEnEscritorio, setOcultoEnEscritorio] = useState(false)
+  // El menú arranca oculto en cada inicio de sesión: el layout se monta de nuevo después del login
+  // y su estado no se guarda en ningún lado.
+  const [ocultoEnEscritorio, setOcultoEnEscritorio] = useState(true)
   const [pantallaPrevia, setPantallaPrevia] = useState(pantallaChica)
   const [sinTransicion, setSinTransicion] = useState(false)
   // Al cambiar de tamaño de pantalla, el menú desplegable de móvil arranca cerrado y el

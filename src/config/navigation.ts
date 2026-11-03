@@ -4,6 +4,7 @@ import { PERMISOS, cumpleRequisito, type ConsultaPermiso, type RequisitoAcceso }
 
 export const RUTAS = {
   login: '/login',
+  inicio: '/inicio',
   dashboard: '/dashboard-economico',
   simulador: '/simulador-escenarios',
   monitoreo: '/monitoreo-chinche-verde',
@@ -83,15 +84,9 @@ export function seccionesDisponibles(tienePermiso: ConsultaPermiso): NavItem[] {
   return NAV_ITEMS.filter((item) => cumpleRequisito(tienePermiso, item.acceso))
 }
 
-/** Si el usuario puede entrar a la ruta. Las rutas que no son secciones no se restringen aquí. */
-export function puedeAcceder(path: string, tienePermiso: ConsultaPermiso): boolean {
-  const item = NAV_ITEMS.find((i) => i.path === path)
-  return !item || cumpleRequisito(tienePermiso, item.acceso)
-}
-
 /**
- * Prioridad para elegir la pantalla inicial. Es distinta del orden del menú: la Administración
- * figura primera en el menú, pero solo es la pantalla inicial si no hay otra sección habilitada.
+ * Prioridad para sugerir una sección (por ejemplo, desde la pantalla sin permiso). Es distinta
+ * del orden del menú: la Administración figura primera, pero se sugiere solo si no hay otra.
  */
 const PRIORIDAD_INICIAL: string[] = [
   RUTAS.dashboard,
@@ -101,10 +96,7 @@ const PRIORIDAD_INICIAL: string[] = [
   RUTAS.administracion,
 ]
 
-/**
- * Pantalla a la que se llega después del login o con una dirección desconocida: la primera
- * sección habilitada según PRIORIDAD_INICIAL. null si no tiene acceso a ninguna sección.
- */
+/** Primera sección habilitada según PRIORIDAD_INICIAL; null si no tiene acceso a ninguna. */
 export function rutaInicial(tienePermiso: ConsultaPermiso): string | null {
   const disponibles = new Set(seccionesDisponibles(tienePermiso).map((item) => item.path))
   return PRIORIDAD_INICIAL.find((path) => disponibles.has(path)) ?? null

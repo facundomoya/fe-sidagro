@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import { etiquetaRol } from '../../auth/roles'
-import { NAV_ITEMS } from '../../config/navigation'
+import { NAV_ITEMS, RUTAS } from '../../config/navigation'
 import { IconLogout, IconMenu } from '../icons/Icons'
 
 interface HeaderProps {
@@ -12,7 +12,7 @@ interface HeaderProps {
 
 function Header({ menuVisible, onMenuClick }: HeaderProps) {
   const { pathname } = useLocation()
-  const current = NAV_ITEMS.find((item) => item.path === pathname)
+  const actual = pathname === RUTAS.inicio ? 'Inicio' : NAV_ITEMS.find((item) => item.path === pathname)?.label
   const { usuario, cerrarSesion } = useAuth()
   const nombreCompleto = usuario ? `${usuario.name} ${usuario.lastname}`.trim() || usuario.username : ''
   const iniciales = nombreCompleto
@@ -36,10 +36,10 @@ function Header({ menuVisible, onMenuClick }: HeaderProps) {
       </button>
       <div className="header__breadcrumb">
         <span>SID-Agro</span>
-        {current && (
+        {actual && (
           <>
             <span className="header__separator">/</span>
-            <strong>{current.label}</strong>
+            <strong>{actual}</strong>
           </>
         )}
       </div>
